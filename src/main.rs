@@ -61,7 +61,6 @@ fn main() {
         vec![0, 0, 0, 0, 0],
     ];
 
-
     let shapes = vec![shape1, shape2];
 
     let shape = shapes[rng.gen_range(0..shapes.len())].clone();
@@ -88,10 +87,9 @@ fn main() {
                 on_bottom = false;
                 on_bottom_for = 0;
             }
-        }else{
+        } else {
             on_bottom_for = 0;
         }
-
 
         if should_spawn {
             for y in 0..arena.len() {
@@ -241,7 +239,6 @@ fn main() {
             }
         }
 
-
         for i in 0..22 {
             d.draw_line(498 + (i * 16), 116, 498 + (i * 16), 676, Color::BLACK);
         }
@@ -260,10 +257,7 @@ fn main() {
     }
 }
 
-fn move_down(
-    arena: &mut Vec<Vec<i32>>,
-    on_bottom: &mut bool,
-) {
+fn move_down(arena: &mut Vec<Vec<i32>>, on_bottom: &mut bool) {
     let mut changed = false;
     for y in (0..arena.len()).rev() {
         for x in 0..arena[y].len() {
@@ -294,30 +288,40 @@ fn move_down(
 }
 
 fn despawn_full_lines(arena: &mut Vec<Vec<i32>>) {
-    for y in (0..arena.len()).rev() {
-        let mut full = true;
-        for x in 0..arena[y].len() {
-            if arena[y][x] == 0 {
-                full = false;
+    let mut was_despawned = true;
+    let mut despawned = 0;
+    while was_despawned {
+        was_despawned = false;
+        for y in (0..arena.len()).rev() {
+            let mut full = true;
+            for x in 0..arena[y].len() {
+                if arena[y][x] == 0 {
+                    full = false;
+                }
             }
-        }
-        if full {
-            for y2 in (0..y).rev() {
-                for x in 0..arena[y2].len() {
-                    arena[y2 + 1][x] = arena[y2][x];
+            if full {
+                was_despawned = true;
+                despawned += 1;
+                for y2 in (0..y).rev() {
+                    for x in 0..arena[y2].len() {
+                        arena[y2 + 1][x] = arena[y2][x];
+                    }
                 }
             }
         }
     }
+    if despawned > 0 {
+        println!("Despawned: {}", despawned);
+    }
 }
-
 fn move_right(arena: &mut Vec<Vec<i32>>) {
     let mut can_move = true;
 
     // go over each row, and get the furthest right value that is 1, then check if it can move right
     for y in 0..arena.len() {
         let mut furthest_right = None; // Start as None to check if there's a 1
-        for x in (0..arena[y].len()).rev() { // Iterate from right to left
+        for x in (0..arena[y].len()).rev() {
+            // Iterate from right to left
             if arena[y][x] == 1 {
                 furthest_right = Some(x);
                 break; // We can break here as we're looking for the first (furthest right) 1
@@ -335,7 +339,8 @@ fn move_right(arena: &mut Vec<Vec<i32>>) {
     // If it can move right, move everything that is 1 to the right
     if can_move {
         for y in 0..arena.len() {
-            for x in (0..arena[y].len()).rev() { // Iterate from right to left
+            for x in (0..arena[y].len()).rev() {
+                // Iterate from right to left
                 if arena[y][x] == 1 {
                     if x < arena[y].len() - 1 && arena[y][x + 1] == 0 {
                         arena[y][x + 1] = 1;
@@ -353,7 +358,8 @@ fn move_left(arena: &mut Vec<Vec<i32>>) {
     // Go over each row and get the furthest left value that is 1, then check if it can move left
     for y in 0..arena.len() {
         let mut furthest_left = None; // Start as None to check if there's a 1
-        for x in 0..arena[y].len() { // Iterate from left to right
+        for x in 0..arena[y].len() {
+            // Iterate from left to right
             if arena[y][x] == 1 {
                 furthest_left = Some(x);
                 break; // We can break here as we're looking for the first (furthest left) 1
@@ -371,7 +377,8 @@ fn move_left(arena: &mut Vec<Vec<i32>>) {
     // If it can move left, move everything that is 1 to the left
     if can_move {
         for y in 0..arena.len() {
-            for x in 0..arena[y].len() { // Iterate from left to right
+            for x in 0..arena[y].len() {
+                // Iterate from left to right
                 if arena[y][x] == 1 {
                     if x > 0 && arena[y][x - 1] == 0 {
                         arena[y][x - 1] = 1;
