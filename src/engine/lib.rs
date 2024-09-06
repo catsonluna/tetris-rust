@@ -1,3 +1,5 @@
+use std::sync::{Mutex, Arc};
+use lazy_static::lazy_static;
 use super::{events::events::UPDATE_EVENT, listeners::lib::register_events};
 
 pub struct RaylibState {
@@ -5,7 +7,12 @@ pub struct RaylibState {
     pub thread: raylib::RaylibThread,
 }
 
-pub static mut RAYLIB_STATE: Option<RaylibState> = None;
+unsafe impl Sync for RaylibState {}
+unsafe impl Send for RaylibState {}
+
+lazy_static! {
+    pub static ref RAYLIB_STATE: Arc<Mutex<Option<RaylibState>>> = Arc::new(Mutex::new(None));
+}
 
 pub fn start() {
     register_events();
@@ -16,16 +23,35 @@ pub fn start() {
         .title("Tetris")
         .build();
 
-    unsafe {
-        RAYLIB_STATE = Some(RaylibState {
+    {
+        let mut state = RAYLIB_STATE.lock().unwrap();
+        *state = Some(RaylibState {
             rl,
             thread,
         });
     }
 
-    unsafe { RAYLIB_STATE.as_mut().unwrap().rl.set_target_fps(60) };
+    {
+        let mut state = RAYLIB_STATE.lock().unwrap();
+        if let Some(ref mut raylib_state) = *state {
+            raylib_state.rl.set_target_fps(60);
+        }
+    }
 
-    while !unsafe { RAYLIB_STATE.as_mut().unwrap().rl.window_should_close() } {
+    loop {
+        let should_close = {
+            let state = RAYLIB_STATE.lock().unwrap();
+            if let Some(ref raylib_state) = *state {
+                raylib_state.rl.window_should_close()
+            } else {
+                false
+            }
+        };
+
+        if should_close {
+            break;
+        }
+
         UPDATE_EVENT.call();
     }
 }

@@ -4,7 +4,6 @@ use crate::engine::{events::events::{RENDER_EVENT, TICK_EVENT}, managers::game_s
 
 pub fn on_update() {
     RENDER_EVENT.call();
-
     do_tick();
     
 }
