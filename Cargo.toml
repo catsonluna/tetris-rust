@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 event-listener-primitives = "2.0.1"
+lazy_static = "1.5.0"
 once_cell = "1.19.0"
 rand = "0.8.5"
 raylib = "5.0.2"

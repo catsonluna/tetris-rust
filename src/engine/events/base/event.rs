@@ -5,7 +5,9 @@ use event_listener_primitives::{Bag, BagOnce, HandlerId};
 
 #[derive(Default)]
 pub struct Handlers {
-    pub action: Bag<Arc<dyn Fn() + Send + Sync + 'static>>,
+    pub action: Bag<Arc<dyn Fn(
+        
+    ) + Send + Sync + 'static>>,
     pub closed: BagOnce<Box<dyn FnOnce() + Send + 'static>>,
 }
 

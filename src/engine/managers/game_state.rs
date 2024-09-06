@@ -5,6 +5,7 @@ use once_cell::sync::Lazy;
 pub struct GameState {
     pub last_update: Instant,
     pub tick_accumulator: Duration,
+    pub arena: Vec<Vec<i32>>,
 }
 
 impl GameState {
@@ -12,6 +13,7 @@ impl GameState {
         Self {
             last_update: Instant::now(),
             tick_accumulator: Duration::from_secs(0),
+            arena: vec![vec![0; 21]; 40],
         }
     }
 }

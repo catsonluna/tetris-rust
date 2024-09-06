@@ -629,6 +629,7 @@ name = "tetris-rust"
 version = "0.1.0"
 dependencies = [
  "event-listener-primitives",
+ "lazy_static",
  "once_cell",
  "rand",
  "raylib",
