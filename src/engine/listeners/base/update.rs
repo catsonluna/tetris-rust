@@ -1,6 +1,6 @@
 use std::time::{Duration, Instant};
 
-use crate::engine::{events::events::{RENDER_EVENT, TICK_EVENT}, lib::GAME_STATE};
+use crate::engine::{events::events::{RENDER_EVENT, TICK_EVENT}, managers::game_state::{read_game_state, write_game_state}};
 
 pub fn on_update() {
     RENDER_EVENT.call();
@@ -10,20 +10,16 @@ pub fn on_update() {
 }
 
 pub fn do_tick() {
+    let tickrate = (1.0/30.0 * 1000.0) as u64;
     let now = Instant::now();
-    let delta_time = now.duration_since(
-        unsafe { GAME_STATE
-            .last_update }
-    );
-    unsafe { GAME_STATE.last_update = now };
-    
-    unsafe {
-        GAME_STATE.tick_accumulator += delta_time;   
-    }
+    let delta_time = now.duration_since(read_game_state().last_update);
 
-    // call tick event 20 times per second
-    while unsafe { GAME_STATE.tick_accumulator } >= Duration::from_millis(50) {
-        unsafe { GAME_STATE.tick_accumulator -= Duration::from_millis(50) };
-         TICK_EVENT.call();
+    write_game_state().last_update = now;
+    write_game_state().tick_accumulator += delta_time;
+    
+
+    while read_game_state().tick_accumulator >= Duration::from_millis(tickrate) {
+        write_game_state().tick_accumulator -= Duration::from_millis(tickrate);
+        TICK_EVENT.call();
     }
 }

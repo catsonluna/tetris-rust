@@ -1,26 +1,6 @@
-use std::time::{Duration, Instant};
-
 use super::{events::events::UPDATE_EVENT, listeners::lib::register_events};
 use rand::Rng;
 use raylib::prelude::*;
-use once_cell::sync::Lazy;
-
-
-pub struct GameState {
-    pub last_update: Instant,
-    pub tick_accumulator: Duration,
-}
-
-impl GameState {
-    pub fn new() -> Self {
-        Self {
-            last_update: Instant::now(),
-            tick_accumulator: Duration::from_secs(0),
-        }
-    }
-}
-
-pub static mut GAME_STATE: Lazy<GameState> = Lazy::new(|| GameState::new());
 
 
 pub fn start() {
