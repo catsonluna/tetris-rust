@@ -19,22 +19,13 @@ pub fn on_render() {
 
         for (y, row) in game_state.arena.iter().enumerate() {
             for (x, &val) in row.iter().enumerate() {
-                if val == 1 {
+                if val != 0 {
                     d.draw_rectangle(
                         (498.0 + (x as f32 * size)) as i32,
                         (36.0 + (y as f32 * size)) as i32,
                         size as i32,
                         size as i32,
-                        Color::BLACK,
-                    );
-                }
-                if val == 2 {
-                    d.draw_rectangle(
-                        (498.0 + (x as f32 * size)) as i32,
-                        (36.0 + (y as f32 * size)) as i32,
-                        size as i32,
-                        size as i32,
-                        Color::RED,
+                        read_game_state().colors.iter().find(|(id, _)| id == &val).unwrap().1,
                     );
                 }
             }
