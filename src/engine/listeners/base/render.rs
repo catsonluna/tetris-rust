@@ -1,10 +1,11 @@
-use crate::engine::{lib::RAYLIB_STATE, managers::game_state::GAME_STATE};
+use crate::engine::{lib::RAYLIB_STATE, managers:: game_state::read_game_state};
 use raylib::prelude::*;
 
 pub fn on_render() {
     let mut state = RAYLIB_STATE.lock().unwrap();
     let size = 16.0;
     if let Some(ref mut raylib_state) = *state {
+        let game_state = read_game_state();
         let mut d = raylib_state.rl.begin_drawing(&raylib_state.thread);
         d.clear_background(raylib::color::Color::WHITE);
 
@@ -16,7 +17,7 @@ pub fn on_render() {
             Color::BLACK,
         );
 
-        for (y, row) in GAME_STATE.read().unwrap().arena.iter().enumerate() {
+        for (y, row) in game_state.arena.iter().enumerate() {
             for (x, &val) in row.iter().enumerate() {
                 if val == 1 {
                     d.draw_rectangle(
