@@ -1,6 +1,6 @@
-use std::sync::{Mutex, Arc};
-use lazy_static::lazy_static;
 use super::{events::events::UPDATE_EVENT, listeners::lib::register_events};
+use lazy_static::lazy_static;
+use std::sync::{Arc, Mutex};
 
 pub struct RaylibState {
     pub rl: raylib::RaylibHandle,
@@ -25,10 +25,7 @@ pub fn start() {
 
     {
         let mut state = RAYLIB_STATE.lock().unwrap();
-        *state = Some(RaylibState {
-            rl,
-            thread,
-        });
+        *state = Some(RaylibState { rl, thread });
     }
 
     {

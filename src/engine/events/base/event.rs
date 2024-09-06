@@ -2,20 +2,15 @@ use std::sync::Arc;
 
 use event_listener_primitives::{Bag, BagOnce, HandlerId};
 
-
 #[derive(Default)]
 pub struct Handlers {
-    pub action: Bag<Arc<dyn Fn(
-        
-    ) + Send + Sync + 'static>>,
+    pub action: Bag<Arc<dyn Fn() + Send + Sync + 'static>>,
     pub closed: BagOnce<Box<dyn FnOnce() + Send + 'static>>,
 }
-
 
 pub struct BaseEvent {
     pub handlers: Handlers,
 }
-
 
 impl Drop for BaseEvent {
     fn drop(&mut self) {

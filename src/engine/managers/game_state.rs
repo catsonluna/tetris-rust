@@ -1,6 +1,8 @@
-use std::{sync::{RwLock, RwLockReadGuard, RwLockWriteGuard}, time::{Duration, Instant}};
 use once_cell::sync::Lazy;
-
+use std::{
+    sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
+    time::{Duration, Instant},
+};
 
 pub struct GameState {
     pub last_update: Instant,
@@ -20,7 +22,7 @@ impl GameState {
 
 pub static GAME_STATE: Lazy<RwLock<GameState>> = Lazy::new(|| RwLock::new(GameState::new()));
 
-pub fn read_game_state() -> RwLockReadGuard<'static, GameState, > {
+pub fn read_game_state() -> RwLockReadGuard<'static, GameState> {
     GAME_STATE.read().unwrap()
 }
 
