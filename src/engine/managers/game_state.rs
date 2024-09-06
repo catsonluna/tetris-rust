@@ -8,6 +8,10 @@ pub struct GameState {
     pub drop_ticks: f32,
     pub colors: Vec<(i32, Color)>,
     pub ground_ticks: i32,
+
+    pub left_hold: i32,
+    pub right_hold: i32,
+    pub down_hold: i32,
 }
 
 impl GameState {
@@ -19,6 +23,9 @@ impl GameState {
             drop_ticks: 0.0,
             ground_ticks: 0,
             colors: vec![],
+            left_hold: 0,
+            right_hold: 0,
+            down_hold: 0,
         }
     }
 }
