@@ -1,6 +1,7 @@
-use super::{events::events::UPDATE_EVENT, listeners::lib::register_events};
+use super::{events::events::UPDATE_EVENT, listeners::lib::register_events, managers::game_manager::{read_game_manager, write_game_manager}};
 use lazy_static::lazy_static;
 use std::sync::{Arc, Mutex};
+use raylib::prelude::*;
 
 pub struct RaylibState {
     pub rl: raylib::RaylibHandle,
@@ -36,7 +37,7 @@ pub fn start() {
         }
     }
 
-    loop {
+    while !read_game_manager().should_quit {
         let should_close = {
             let state = RAYLIB_STATE.lock().unwrap();
             if let Some(ref raylib_state) = *state {
@@ -47,9 +48,14 @@ pub fn start() {
         };
 
         if should_close {
-            break;
+            write_game_manager().should_quit = true;
         }
 
         UPDATE_EVENT.call();
+    }
+
+    {
+        let mut state = RAYLIB_STATE.lock().unwrap();
+        *state = None;
     }
 }

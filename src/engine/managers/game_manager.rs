@@ -12,7 +12,7 @@ pub struct GameManager {
     pub delta_time: u128,
     pub in_game: bool,
     pub running: bool,
-    pub input_buffer: Vec<KeyboardKey>,
+    pub should_quit: bool,
 }
 
 impl GameManager {
@@ -22,9 +22,9 @@ impl GameManager {
             last_update: Instant::now(),
             tick_accumulator: Duration::from_secs(0),
             delta_time: 0,
-            in_game: true,
-            running: true,
-            input_buffer: Vec::new(),
+            in_game: false,
+            running: false,
+            should_quit: false,
         }
     }
 }
