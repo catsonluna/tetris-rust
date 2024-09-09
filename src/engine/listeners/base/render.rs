@@ -1,4 +1,4 @@
-use crate::engine::{lib::RAYLIB_STATE, managers:: game_state::read_game_state};
+use crate::engine::{lib::RAYLIB_STATE, managers::game_state::read_game_state};
 use raylib::prelude::*;
 
 pub fn on_render() {
@@ -25,7 +25,12 @@ pub fn on_render() {
                         (36.0 + (y as f32 * size)) as i32,
                         size as i32,
                         size as i32,
-                        read_game_state().colors.iter().find(|(id, _)| id == &val).unwrap().1,
+                        read_game_state()
+                            .colors
+                            .iter()
+                            .find(|(id, _)| id == &val)
+                            .unwrap()
+                            .1,
                     );
                 }
             }

@@ -1,8 +1,10 @@
 use std::time::{Duration, Instant};
 
 use crate::engine::{
-    events::events::{RENDER_EVENT, TICK_EVENT},
-    managers::{game_manager::{read_game_manager, write_game_manager}, game_statics::read_game_statics},
+    events::events::{RENDER_EVENT, TICK_EVENT}, managers::{
+        game_manager::{read_game_manager, write_game_manager},
+        game_statics::read_game_statics,
+    }
 };
 
 pub fn on_update() {

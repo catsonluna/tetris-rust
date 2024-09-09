@@ -4,7 +4,6 @@ use std::sync::{RwLock, RwLockReadGuard};
 pub struct GameStatics {
     pub tick_rate: i32,
     pub block_size: i32,
-
 }
 
 impl GameStatics {

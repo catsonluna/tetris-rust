@@ -1,4 +1,5 @@
 use once_cell::sync::Lazy;
+use raylib::ffi::KeyboardKey;
 use std::{
     sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
     time::{Duration, Instant},
@@ -11,6 +12,7 @@ pub struct GameManager {
     pub delta_time: u128,
     pub in_game: bool,
     pub running: bool,
+    pub input_buffer: Vec<KeyboardKey>,
 }
 
 impl GameManager {
@@ -22,6 +24,7 @@ impl GameManager {
             delta_time: 0,
             in_game: true,
             running: true,
+            input_buffer: Vec::new(),
         }
     }
 }

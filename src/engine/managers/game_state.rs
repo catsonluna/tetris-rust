@@ -1,6 +1,6 @@
 use once_cell::sync::Lazy;
-use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use raylib::color::Color;
+use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 pub struct GameState {
     pub controlling: i32,
     pub arena: Vec<Vec<i32>>,

@@ -1,8 +1,13 @@
 use rand::Rng;
 
-use crate::engine::{lib::RAYLIB_STATE, managers::{game_manager::{self, read_game_manager, write_game_manager}, game_state::{self, read_game_state, write_game_state}}};
+use crate::engine::{
+    lib::RAYLIB_STATE,
+    managers::{
+        game_manager::{read_game_manager, write_game_manager},
+        game_state::{read_game_state, write_game_state},
+    },
+};
 use raylib::prelude::*;
-
 
 pub fn on_tick() {
     if !read_game_manager().in_game {
@@ -14,6 +19,14 @@ pub fn on_tick() {
     }
 
     should_respawn();
+    check_game_over();
+    if !read_game_manager().in_game {
+        return;
+    }
+
+    if !read_game_manager().running {
+        return;
+    }
     check_spawn();
     check_move();
     move_down(false);
@@ -29,15 +42,27 @@ fn should_respawn() {
 
 fn check_spawn() {
     if read_game_state().controlling == 0 {
-        let shape = vec![
+        let shape_r = vec![
             vec![1, 1, 1, 1, 1],
             vec![1, 1, 1, 1, 1],
             vec![1, 1, 1, 1, 1],
             vec![1, 1, 1, 1, 1],
             vec![1, 1, 1, 1, 1],
         ];
-        
+
+        let shape_i = vec![
+            vec![0, 0, 1, 0, 0],
+            vec![0, 0, 1, 0, 0],
+            vec![0, 0, 1, 0, 0],
+            vec![0, 0, 1, 0, 0],
+            vec![0, 0, 1, 0, 0],
+        ];
+
+
         let rng = &mut write_game_manager().rng;
+
+        // make a random 5x5 shape with 0s and 1s
+        let shape = if rng.gen::<bool>() { shape_r } else { shape_i };
 
         let random = rng.gen::<i32>();
 
@@ -47,9 +72,12 @@ fn check_spawn() {
                 write_game_state().arena[y][x + 8] = if val == 1 { random } else { 0 };
             }
         }
-    
+
         write_game_state().controlling = random;
-        let color = (random, raylib::color::Color::new(rng.gen::<u8>(), rng.gen::<u8>(), rng.gen::<u8>(), 255));
+        let color = (
+            random,
+            raylib::color::Color::new(rng.gen::<u8>(), rng.gen::<u8>(), rng.gen::<u8>(), 255),
+        );
         write_game_state().colors.push(color);
     }
 }
@@ -95,42 +123,42 @@ fn move_down(forced: bool) {
 fn check_move() {
     let mut state = RAYLIB_STATE.lock().unwrap();
     if let Some(ref mut raylib_state) = *state {
-        if raylib_state.rl.is_key_down(KeyboardKey::KEY_S) {
+        if raylib_state.rl.is_key_down(KeyboardKey::KEY_DOWN) {
             if read_game_state().down_hold < 4 {
                 write_game_state().down_hold += 1;
-            }else{
+            } else {
                 move_down(true);
-                write_game_state().down_hold = 2;
+                write_game_state().down_hold = 3;
             }
-        }else{
+        } else {
             if read_game_state().down_hold > 0 {
                 move_down(true);
             }
             write_game_state().down_hold = 0;
         }
 
-        if raylib_state.rl.is_key_down(KeyboardKey::KEY_D) {
+        if raylib_state.rl.is_key_down(KeyboardKey::KEY_RIGHT) {
             if read_game_state().right_hold < 4 {
                 write_game_state().right_hold += 1;
-            }else{
+            } else {
                 move_right();
-                write_game_state().right_hold = 2;
+                write_game_state().right_hold = 3;
             }
-        }else{
+        } else {
             if read_game_state().right_hold > 0 {
                 move_right();
             }
             write_game_state().right_hold = 0;
         }
 
-        if raylib_state.rl.is_key_down(KeyboardKey::KEY_A) {
+        if raylib_state.rl.is_key_down(KeyboardKey::KEY_LEFT) {
             if read_game_state().left_hold < 4 {
                 write_game_state().left_hold += 1;
-            }else{
+            } else {
                 move_left();
-                write_game_state().left_hold = 2;
+                write_game_state().left_hold = 3;
             }
-        }else{
+        } else {
             if read_game_state().left_hold > 0 {
                 move_left();
             }
@@ -141,10 +169,8 @@ fn check_move() {
             drop();
         }
 
-
     }
 }
-
 
 fn move_right() {
     let mut can_move = true;
@@ -257,4 +283,20 @@ fn drop() {
     }
     game_state.controlling = 0;
     game_state.drop_ticks = 0.0;
+}
+
+
+fn check_game_over() {
+    // check if a shape that isnt the controlling shape is at the top first 5 rows
+    let game_manager = &mut write_game_manager();
+    let game_state = &mut write_game_state();
+    for y in 0..5 {
+        for x in 0..game_state.arena[y].len() {
+            if game_state.arena[y][x] != 0 && game_state.arena[y][x] != game_state.controlling {
+                game_manager.in_game = false;
+                game_manager.running = false;
+                break;
+            }
+        }
+    }
 }
