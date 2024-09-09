@@ -5,7 +5,7 @@ use std::{
     sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
     time::{Duration, Instant},
 };
-
+#[derive(PartialEq)] // Add the PartialEq trait
 pub enum KeyboardAction {
     Pressed,
     Released,

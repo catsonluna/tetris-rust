@@ -17,9 +17,14 @@ pub struct GameState {
     pub colors: Vec<(i32, Color)>,
     pub ground_ticks: i32,
 
-    pub left_hold: i32,
-    pub right_hold: i32,
-    pub down_hold: i32,
+    pub left_hold: ActionManager,
+    pub right_hold: ActionManager,
+    pub down_hold: ActionManager,
+}
+
+pub struct  ActionManager {
+    pub is_pressed: bool,
+    pub move_ticks: i32,
 }
 
 impl GameState {
@@ -31,13 +36,25 @@ impl GameState {
             drop_ticks: 0.0,
             ground_ticks: 0,
             colors: vec![],
-            left_hold: 0,
-            right_hold: 0,
-            down_hold: 0,
             score: 0,
             level: 1,
             lines_till_next_level: 10,
             game_over: false,
+
+            left_hold: ActionManager {
+                is_pressed: false,
+                move_ticks: 0,
+            },
+
+            right_hold: ActionManager {
+                is_pressed: false,
+                move_ticks: 0,
+            },
+
+            down_hold: ActionManager {
+                is_pressed: false,
+                move_ticks: 0,
+            },
         }
     }
 }

@@ -1,14 +1,17 @@
+use std::fmt::Debug;
+
 use rand::Rng;
 
 use crate::engine::{
     lib::RAYLIB_STATE,
     managers::{
-        game_manager::{self, read_game_manager, write_game_manager},
-        game_state::{read_game_state, write_game_state},
+        game_manager::{self,  write_game_manager, KeyboardAction},
+        game_state::{self,  write_game_state},
     },
 };
 use raylib::prelude::*;
 
+#[derive(PartialEq)] // Add the PartialEq trait
 enum Action {
     MoveRight,
     MoveLeft,
@@ -16,47 +19,71 @@ enum Action {
     Drop,
 }
 
+impl Debug for Action {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Action::MoveRight => write!(f, "MoveRight"),
+            Action::MoveLeft => write!(f, "MoveLeft"),
+            Action::MoveDown => write!(f, "MoveDown"),
+            Action::Drop => write!(f, "Drop"),
+        }
+    }
+    
+}
+
 pub fn on_tick() {
-    // println!("Tick");
-    if !read_game_manager().in_game {
+    let game_state = &mut write_game_state();
+    let game_manager = &mut write_game_manager();
+
+    if !game_manager.in_game {
         return;
     }
 
-    if !read_game_manager().running {
+    if !game_manager.running {
         return;
     }
 
-    should_respawn();
-    check_game_over();
-    if !read_game_manager().in_game {
+    should_respawn(game_state);
+    check_game_over(game_manager, game_state);
+    if !game_manager.in_game {
         return;
     }
 
-    if !read_game_manager().running {
+    if !game_manager.running {
         return;
     }
-    check_spawn();
-    check_move();
-    move_down(false);
-    destoy_lines();
+    check_spawn(
+        game_manager,
+        game_state
+    );
+    check_move(
+        game_manager,
+        game_state,
+    );
+    move_down(game_state, false);
+    destoy_lines(game_state);
 
-    if read_game_manager().input_buffer.len() > 0 {
-        println!("input buffer: {:?}", read_game_manager().input_buffer);
-        // clear the input buffer
-        write_game_manager().input_buffer.clear();
+    if game_manager.input_buffer.len() > 0 {
+        println!("input buffer: {:?}", game_manager.input_buffer);
+
+        game_manager.input_buffer.clear();
     }
 }
 
-fn should_respawn() {
-    let game_state = &mut write_game_state();
+fn should_respawn(
+    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
+) {
     if game_state.ground_ticks > 12 {
         game_state.ground_ticks = 0;
         game_state.controlling = 0;
     }
 }
 
-fn check_spawn() {
-    if read_game_state().controlling == 0 {
+fn check_spawn(
+    game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager>,
+    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
+) {
+    if game_state.controlling == 0 {
         let shape_r = vec![
             vec![1, 1, 1, 1, 1],
             vec![1, 1, 1, 1, 1],
@@ -73,7 +100,7 @@ fn check_spawn() {
             vec![0, 0, 1, 0, 0],
         ];
 
-        let rng = &mut write_game_manager().rng;
+        let rng = &mut game_manager.rng;
 
         // make a random 5x5 shape with 0s and 1s
         let shape = if rng.gen::<bool>() { shape_r } else { shape_i };
@@ -82,74 +109,82 @@ fn check_spawn() {
 
         for (y, row) in shape.iter().enumerate() {
             for (x, &val) in row.iter().enumerate() {
-                write_game_state().arena[y][x + 8] = if val == 1 { random } else { 0 };
+                game_state.arena[y][x + 8] = if val == 1 { random } else { 0 };
             }
         }
 
-        write_game_state().controlling = random;
+        game_state.controlling = random;
         let color = (
             random,
             raylib::color::Color::new(rng.gen::<u8>(), rng.gen::<u8>(), rng.gen::<u8>(), 255),
         );
-        write_game_state().colors.push(color);
+        game_state.colors.push(color);
     }
 }
 
-fn check_move() {
+fn check_move(
+    game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager>,
+    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
+) {
     let mut state = RAYLIB_STATE.lock().unwrap();
-    let game_manager = &mut write_game_manager();
     if let Some(ref mut raylib_state) = *state {
-        if raylib_state.rl.is_key_down(KeyboardKey::KEY_DOWN) {
-            if read_game_state().down_hold < 4 {
-                write_game_state().down_hold += 1;
-            } else {
-                move_down(true);
-                write_game_state().down_hold = 3;
+        let actions = process_input_buffer(
+            game_manager,
+            game_state,
+        );
+
+        for action in actions {
+            match action {
+                Action::MoveRight => move_right(
+                    game_state,
+                ),
+                Action::MoveLeft => move_left(
+                    game_state,
+                ),
+                Action::MoveDown => move_down(
+                    game_state,true),
+                Action::Drop => drop(game_state),
             }
-        } else {
-            if read_game_state().down_hold > 0 {
-                move_down(true);
-            }
-            write_game_state().down_hold = 0;
         }
 
-        if raylib_state.rl.is_key_down(KeyboardKey::KEY_RIGHT) {
-            if read_game_state().right_hold < 4 {
-                write_game_state().right_hold += 1;
-            } else {
-                move_right();
-                write_game_state().right_hold = 3;
+
+        if game_state.right_hold.is_pressed {
+            game_state.right_hold.move_ticks += 1;
+            if game_state.right_hold.move_ticks > 5 {
+                move_right(game_state);
+                game_state.right_hold.move_ticks = 4;
             }
-        } else {
-            if read_game_state().right_hold > 0 {
-                move_right();
-            }
-            write_game_state().right_hold = 0;
+        }else{
+            game_state.right_hold.move_ticks = 0;
         }
 
-        if raylib_state.rl.is_key_down(KeyboardKey::KEY_LEFT) {
-            if read_game_state().left_hold < 4 {
-                write_game_state().left_hold += 1;
-            } else {
-                move_left();
-                write_game_state().left_hold = 3;
+        if game_state.left_hold.is_pressed {
+            game_state.left_hold.move_ticks += 1;
+            if game_state.left_hold.move_ticks > 5 {
+                move_left(game_state);
+                game_state.left_hold.move_ticks = 4;
             }
-        } else {
-            if read_game_state().left_hold > 0 {
-                move_left();
-            }
-            write_game_state().left_hold = 0;
+        }else{
+            game_state.left_hold.move_ticks = 0;
         }
 
-        if raylib_state.rl.is_key_pressed(KeyboardKey::KEY_SPACE) {
-            drop();
+        if game_state.down_hold.is_pressed {
+            game_state.down_hold.move_ticks += 1;
+            if game_state.down_hold.move_ticks > 5 {
+                move_down(game_state, true);
+                game_state.down_hold.move_ticks = 4;
+            }
+        }else{
+            game_state.down_hold.move_ticks = 0;
         }
+
     }
 }
 
-fn move_right() {
+fn move_right(
+    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
+) {
     let mut can_move = true;
-    let game_state = &mut write_game_state();
     // go over each row, and get the furthest right value that is 1, then check if it can move right
     for y in 0..game_state.arena.len() {
         let mut furthest_right = None; // Start as None to check if there's a 1
@@ -185,9 +220,10 @@ fn move_right() {
     }
 }
 
-fn move_left() {
+fn move_left(
+    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
+) {
     let mut can_move = true;
-    let game_state = &mut write_game_state();
 
     // Go over each row and get the furthest left value that is 1, then check if it can move left
     for y in 0..game_state.arena.len() {
@@ -224,9 +260,8 @@ fn move_left() {
     }
 }
 
-fn move_down(forced: bool) {
+fn move_down(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>, forced: bool) {
     let mut changed = false;
-    let game_state = &mut write_game_state();
 
     if game_state.drop_ticks > 0.0 && !forced {
         game_state.drop_ticks -= game_state.drop_speed;
@@ -262,11 +297,12 @@ fn move_down(forced: bool) {
     }
 }
 
-fn drop() {
+fn drop(
+    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
+) {
     let mut done = false;
     let mut changed = false;
 
-    let game_state = &mut write_game_state();
     while !done {
         for y in (0..game_state.arena.len()).rev() {
             for x in 0..game_state.arena[y].len() {
@@ -298,10 +334,10 @@ fn drop() {
     game_state.drop_ticks = 0.0;
 }
 
-fn check_game_over() {
-    // check if a shape that isnt the controlling shape is at the top first 5 rows
-    let game_manager = &mut write_game_manager();
-    let game_state = &mut write_game_state();
+fn check_game_over(
+    game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager>,
+    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
+) {
     for y in 0..5 {
         for x in 0..game_state.arena[y].len() {
             if game_state.arena[y][x] != 0 && game_state.arena[y][x] != game_state.controlling {
@@ -313,8 +349,9 @@ fn check_game_over() {
     }
 }
 
-fn destoy_lines() {
-    let game_state = &mut write_game_state();
+fn destoy_lines(
+    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
+) {
 
     let mut was_despawned = true;
     let mut despawned = 0;
@@ -350,9 +387,66 @@ fn destoy_lines() {
         if game_state.lines_till_next_level <= 0 {
             game_state.level += 1;
             if game_state.level < 13 {
-                game_state.drop_speed = 1.0 + (game_state.level as f32 * 0.28);
+                game_state.drop_speed = 1.0 + (game_state.level as f32 * 0.38);
             }
             game_state.lines_till_next_level = 10 + (game_state.level as f32 * 1.2) as i32;
         }
+    }
+}
+
+fn process_input_buffer(
+    game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager>,
+    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
+) -> Vec<&'static Action> {
+    let mut actions: Vec<&Action> = vec![];
+
+    for (key, key_action) in game_manager.input_buffer.iter() {
+        if let Some(action) = get_action(key) 
+        {
+            match action {
+                Action::MoveRight => {
+                    if key_action == &KeyboardAction::Pressed {
+                        actions.push(&Action::MoveRight);
+                        game_state.right_hold.is_pressed = true;
+                    }else {
+                        game_state.right_hold.is_pressed = false;
+                    }
+                }
+                Action::MoveLeft => {
+                    if key_action == &KeyboardAction::Pressed {
+                        actions.push(&Action::MoveLeft);
+                        game_state.left_hold.is_pressed = true;
+                    }else{
+                        game_state.left_hold.is_pressed = false;
+                    }
+                }
+                Action::MoveDown => {
+                    if key_action == &KeyboardAction::Pressed {
+                        actions.push(&Action::MoveDown);
+                        game_state.down_hold.is_pressed = true;
+                    }else{
+                        game_state.down_hold.is_pressed = false;
+                    }
+                }
+                Action::Drop => {
+                    if key_action == &KeyboardAction::Pressed {
+                        actions.push(&Action::Drop);
+                    }
+                }
+            }
+        }
+    }
+
+    actions
+}
+
+
+fn get_action(key: &KeyboardKey) -> Option<Action> {
+    match key {
+        KeyboardKey::KEY_RIGHT => Some(Action::MoveRight),
+        KeyboardKey::KEY_LEFT => Some(Action::MoveLeft),
+        KeyboardKey::KEY_DOWN => Some(Action::MoveDown),
+        KeyboardKey::KEY_SPACE => Some(Action::Drop),
+        _ => None,
     }
 }
