@@ -1,5 +1,3 @@
-use std::ffi::CString;
-
 use crate::engine::{lib::RAYLIB_STATE, managers::{game_manager::{read_game_manager, write_game_manager}, game_state::read_game_state}};
 use raylib::prelude::*;
 
@@ -18,8 +16,6 @@ fn render_main_menu() {
     let mut state = RAYLIB_STATE.lock().unwrap();
     if let Some(ref mut raylib_state) = *state {
         let mut d = raylib_state.rl.begin_drawing(&raylib_state.thread);
-
-        let hex = d.gui_get_style(GuiControl::DEFAULT, 0);
 
         d.draw_text("Tetris", 498, 116, 100, Color::BLACK);
 

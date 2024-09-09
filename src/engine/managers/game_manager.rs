@@ -1,5 +1,4 @@
 use once_cell::sync::Lazy;
-use raylib::ffi::KeyboardKey;
 use std::{
     sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
     time::{Duration, Instant},
