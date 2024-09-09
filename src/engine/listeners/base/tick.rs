@@ -30,6 +30,7 @@ pub fn on_tick() {
     check_spawn();
     check_move();
     move_down(false);
+    destoy_lines();
 }
 
 fn should_respawn() {
@@ -300,3 +301,34 @@ fn check_game_over() {
         }
     }
 }
+
+fn destoy_lines() {
+
+        let game_state = &mut write_game_state();
+
+        let mut was_despawned = true;
+        let mut despawned = 0;
+        while was_despawned {
+            was_despawned = false;
+            for y in (0..game_state.arena.len()).rev() {
+                let mut full = true;
+                for x in 0..game_state.arena[y].len() {
+                    if game_state.arena[y][x] == 0 || game_state.arena[y][x] == game_state.controlling {
+                        full = false;
+                    }
+                }
+                if full {
+                    was_despawned = true;
+                    despawned += 1;
+                    for y2 in (0..y).rev() {
+                        for x in 0..game_state.arena[y2].len() {
+                            game_state.arena[y2 + 1][x] = game_state.arena[y2][x];
+                        }
+                    }
+                }
+            }
+        }
+        if despawned > 0 {
+            println!("Despawned: {}", despawned);
+        }
+    }
