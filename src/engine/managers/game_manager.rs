@@ -1,8 +1,24 @@
 use once_cell::sync::Lazy;
+use raylib::ffi::KeyboardKey;
 use std::{
+    fmt::Debug,
     sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
     time::{Duration, Instant},
 };
+
+pub enum KeyboardAction {
+    Pressed,
+    Released,
+}
+
+impl Debug for KeyboardAction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            KeyboardAction::Pressed => write!(f, "Pressed"),
+            KeyboardAction::Released => write!(f, "Released"),
+        }
+    }
+}
 
 pub struct GameManager {
     pub rng: rand::rngs::ThreadRng,
@@ -12,6 +28,8 @@ pub struct GameManager {
     pub in_game: bool,
     pub running: bool,
     pub should_quit: bool,
+
+    pub input_buffer: Vec<(KeyboardKey, KeyboardAction)>,
 }
 
 impl GameManager {
@@ -24,6 +42,7 @@ impl GameManager {
             in_game: false,
             running: false,
             should_quit: false,
+            input_buffer: vec![],
         }
     }
 }

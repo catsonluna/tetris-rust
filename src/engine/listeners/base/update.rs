@@ -1,15 +1,28 @@
 use std::time::{Duration, Instant};
 
+use raylib::ffi::KeyboardKey;
+
 use crate::engine::{
-    events::events::{RENDER_EVENT, TICK_EVENT}, managers::{
-        game_manager::{read_game_manager, write_game_manager},
+    events::events::{RENDER_EVENT, TICK_EVENT},
+    lib::RAYLIB_STATE,
+    managers::{
+        game_manager::{read_game_manager, write_game_manager, KeyboardAction},
         game_statics::read_game_statics,
-    }
+    },
 };
+
+static USED_KEYS: [KeyboardKey; 4] = [
+    KeyboardKey::KEY_RIGHT,
+    KeyboardKey::KEY_LEFT,
+    KeyboardKey::KEY_DOWN,
+    KeyboardKey::KEY_SPACE,
+];
 
 pub fn on_update() {
     RENDER_EVENT.call();
+    // println!("Update");
     do_tick();
+    updated_input_buffer();
 }
 
 pub fn do_tick() {
@@ -24,5 +37,21 @@ pub fn do_tick() {
     while read_game_manager().tick_accumulator >= Duration::from_millis(tickrate) {
         write_game_manager().tick_accumulator -= Duration::from_millis(tickrate);
         TICK_EVENT.call();
+    }
+}
+
+pub fn updated_input_buffer() {
+    let mut game_manager = write_game_manager();
+    {
+        let mut state = RAYLIB_STATE.lock().unwrap();
+        if let Some(ref mut raylib_state) = *state {
+            for key in USED_KEYS.iter() {
+                if raylib_state.rl.is_key_pressed(*key) {
+                    game_manager.input_buffer.push((*key, KeyboardAction::Pressed));
+                } else if raylib_state.rl.is_key_released(*key) {
+                    game_manager.input_buffer.push((*key, KeyboardAction::Released));
+                }
+            }
+        }
     }
 }

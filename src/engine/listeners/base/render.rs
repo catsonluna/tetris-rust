@@ -1,13 +1,16 @@
-use crate::engine::{lib::RAYLIB_STATE, managers::{game_manager::{read_game_manager, write_game_manager}, game_state::read_game_state}};
+use crate::engine::{
+    lib::RAYLIB_STATE,
+    managers::{
+        game_manager::{read_game_manager, write_game_manager},
+        game_state::read_game_state,
+    },
+};
 use raylib::prelude::*;
 
 pub fn on_render() {
-
-
-
     if read_game_manager().in_game {
         render_game();
-    }else {
+    } else {
         render_main_menu();
     }
 }
@@ -19,11 +22,14 @@ fn render_main_menu() {
 
         d.draw_text("Tetris", 498, 116, 100, Color::BLACK);
 
-        d.gui_set_style(GuiControl::BUTTON, raylib::consts::GuiControlProperty::TEXT_ALIGNMENT as i32, raylib::consts::GuiTextAlignment::TEXT_ALIGN_CENTER as i32);
+        d.gui_set_style(
+            GuiControl::BUTTON,
+            raylib::consts::GuiControlProperty::TEXT_ALIGNMENT as i32,
+            raylib::consts::GuiTextAlignment::TEXT_ALIGN_CENTER as i32,
+        );
 
-        
         if d.gui_button(rrect(30, 320, 115, 30), Some(rstr!("Start Game"))) {
-            let mut game_manager = &mut write_game_manager();
+            let game_manager = &mut write_game_manager();
             game_manager.in_game = true;
             game_manager.running = true;
         }
@@ -56,7 +62,7 @@ fn render_game() {
             for (x, &val) in row.iter().enumerate() {
                 if val != 0 {
                     d.draw_rectangle(
-                        (498.0 + (x as f32 * size)) as i32,
+                        (624.0 + (x as f32 * size)) as i32,
                         (36.0 + (y as f32 * size)) as i32,
                         size as i32,
                         size as i32,
@@ -72,11 +78,47 @@ fn render_game() {
         }
 
         for i in 0..22 {
-            d.draw_line(498 + (i * 16), 116, 498 + (i * 16), 676, Color::BLACK);
+            d.draw_line(624 + (i * 16), 116, 624 + (i * 16), 676, Color::BLACK);
         }
 
         for i in 0..36 {
-            d.draw_line(498, 116 + (i * 16), 834, 116 + (i * 16), Color::BLACK);
+            d.draw_line(624, 116 + (i * 16), 960, 116 + (i * 16), Color::BLACK);
         }
+
+        d.draw_text(
+            format!("Score: {}", game_state.score).as_str(),
+            624,
+            12,
+            20,
+            Color::BLACK,
+        );
+
+        d.draw_text(
+            format!("Level: {}", game_state.level).as_str(),
+            624,
+            36,
+            20,
+            Color::BLACK,
+        );
+
+        d.draw_text(
+            format!("Speed: {}", game_state.drop_speed).as_str(),
+            624,
+            60,
+            20,
+            Color::BLACK,
+        );
+
+        d.draw_text(
+            format!(
+                "Lines till next level: {}",
+                game_state.lines_till_next_level
+            )
+            .as_str(),
+            624,
+            84,
+            20,
+            Color::BLACK,
+        );
     }
 }

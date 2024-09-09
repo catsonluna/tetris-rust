@@ -2,10 +2,16 @@ use once_cell::sync::Lazy;
 use raylib::color::Color;
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
-
 pub struct GameState {
     pub controlling: i32,
     pub arena: Vec<Vec<i32>>,
+
+    pub game_over: bool,
+
+    pub score: i32,
+    pub level: i32,
+    pub lines_till_next_level: i32,
+
     pub drop_speed: f32,
     pub drop_ticks: f32,
     pub colors: Vec<(i32, Color)>,
@@ -28,6 +34,10 @@ impl GameState {
             left_hold: 0,
             right_hold: 0,
             down_hold: 0,
+            score: 0,
+            level: 1,
+            lines_till_next_level: 10,
+            game_over: false,
         }
     }
 }

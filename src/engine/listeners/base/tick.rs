@@ -3,13 +3,21 @@ use rand::Rng;
 use crate::engine::{
     lib::RAYLIB_STATE,
     managers::{
-        game_manager::{read_game_manager, write_game_manager},
+        game_manager::{self, read_game_manager, write_game_manager},
         game_state::{read_game_state, write_game_state},
     },
 };
 use raylib::prelude::*;
 
+enum Action {
+    MoveRight,
+    MoveLeft,
+    MoveDown,
+    Drop,
+}
+
 pub fn on_tick() {
+    // println!("Tick");
     if !read_game_manager().in_game {
         return;
     }
@@ -31,6 +39,12 @@ pub fn on_tick() {
     check_move();
     move_down(false);
     destoy_lines();
+
+    if read_game_manager().input_buffer.len() > 0 {
+        println!("input buffer: {:?}", read_game_manager().input_buffer);
+        // clear the input buffer
+        write_game_manager().input_buffer.clear();
+    }
 }
 
 fn should_respawn() {
@@ -59,14 +73,12 @@ fn check_spawn() {
             vec![0, 0, 1, 0, 0],
         ];
 
-
         let rng = &mut write_game_manager().rng;
 
         // make a random 5x5 shape with 0s and 1s
         let shape = if rng.gen::<bool>() { shape_r } else { shape_i };
 
         let random = rng.gen::<i32>();
-
 
         for (y, row) in shape.iter().enumerate() {
             for (x, &val) in row.iter().enumerate() {
@@ -83,46 +95,9 @@ fn check_spawn() {
     }
 }
 
-fn move_down(forced: bool) {
-    let mut changed = false;
-    let game_state = &mut write_game_state();
-
-    if game_state.drop_ticks > 0.0 && !forced {
-        game_state.drop_ticks -= game_state.drop_speed;
-        return;
-    }
-    for y in (0..game_state.arena.len()).rev() {
-        for x in 0..game_state.arena[y].len() {
-            if game_state.arena[y][x] == game_state.controlling {
-                if y + 1 >= game_state.arena.len() || game_state.arena[y + 1][x] != 0 {
-                    changed = true;
-                }
-            }
-        }
-        if changed {
-            game_state.ground_ticks += 1;
-            break;
-        } else {
-            for x in 0..game_state.arena[y].len() {
-                if game_state.arena[y][x] == game_state.controlling {
-                    if y + 1 < game_state.arena.len() {
-                        if game_state.arena[y + 1][x] == 0 {
-                            game_state.arena[y + 1][x] = game_state.controlling;
-                            game_state.arena[y][x] = 0;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if !changed {
-        game_state.drop_ticks = 6.0;
-    }
-}
-
 fn check_move() {
     let mut state = RAYLIB_STATE.lock().unwrap();
+    let game_manager = &mut write_game_manager();
     if let Some(ref mut raylib_state) = *state {
         if raylib_state.rl.is_key_down(KeyboardKey::KEY_DOWN) {
             if read_game_state().down_hold < 4 {
@@ -169,7 +144,6 @@ fn check_move() {
         if raylib_state.rl.is_key_pressed(KeyboardKey::KEY_SPACE) {
             drop();
         }
-
     }
 }
 
@@ -250,6 +224,44 @@ fn move_left() {
     }
 }
 
+fn move_down(forced: bool) {
+    let mut changed = false;
+    let game_state = &mut write_game_state();
+
+    if game_state.drop_ticks > 0.0 && !forced {
+        game_state.drop_ticks -= game_state.drop_speed;
+        return;
+    }
+    for y in (0..game_state.arena.len()).rev() {
+        for x in 0..game_state.arena[y].len() {
+            if game_state.arena[y][x] == game_state.controlling {
+                if y + 1 >= game_state.arena.len() || game_state.arena[y + 1][x] != 0 {
+                    changed = true;
+                }
+            }
+        }
+        if changed {
+            game_state.ground_ticks += 1;
+            break;
+        } else {
+            for x in 0..game_state.arena[y].len() {
+                if game_state.arena[y][x] == game_state.controlling {
+                    if y + 1 < game_state.arena.len() {
+                        if game_state.arena[y + 1][x] == 0 {
+                            game_state.arena[y + 1][x] = game_state.controlling;
+                            game_state.arena[y][x] = 0;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if !changed {
+        game_state.drop_ticks = 6.0;
+    }
+}
+
 fn drop() {
     let mut done = false;
     let mut changed = false;
@@ -286,7 +298,6 @@ fn drop() {
     game_state.drop_ticks = 0.0;
 }
 
-
 fn check_game_over() {
     // check if a shape that isnt the controlling shape is at the top first 5 rows
     let game_manager = &mut write_game_manager();
@@ -303,32 +314,45 @@ fn check_game_over() {
 }
 
 fn destoy_lines() {
+    let game_state = &mut write_game_state();
 
-        let game_state = &mut write_game_state();
-
-        let mut was_despawned = true;
-        let mut despawned = 0;
-        while was_despawned {
-            was_despawned = false;
-            for y in (0..game_state.arena.len()).rev() {
-                let mut full = true;
-                for x in 0..game_state.arena[y].len() {
-                    if game_state.arena[y][x] == 0 || game_state.arena[y][x] == game_state.controlling {
-                        full = false;
-                    }
+    let mut was_despawned = true;
+    let mut despawned = 0;
+    while was_despawned {
+        was_despawned = false;
+        for y in (0..game_state.arena.len()).rev() {
+            let mut full = true;
+            for x in 0..game_state.arena[y].len() {
+                if game_state.arena[y][x] == 0 || game_state.arena[y][x] == game_state.controlling {
+                    full = false;
                 }
-                if full {
-                    was_despawned = true;
-                    despawned += 1;
-                    for y2 in (0..y).rev() {
-                        for x in 0..game_state.arena[y2].len() {
-                            game_state.arena[y2 + 1][x] = game_state.arena[y2][x];
-                        }
+            }
+            if full {
+                was_despawned = true;
+                despawned += 1;
+                for y2 in (0..y).rev() {
+                    for x in 0..game_state.arena[y2].len() {
+                        game_state.arena[y2 + 1][x] = game_state.arena[y2][x];
                     }
                 }
             }
         }
-        if despawned > 0 {
-            println!("Despawned: {}", despawned);
+    }
+    if despawned > 0 {
+        let level = if game_state.level > 15 {
+            15
+        } else {
+            game_state.level
+        };
+        game_state.score += (despawned * 100 * level) as i32;
+
+        game_state.lines_till_next_level -= despawned as i32;
+        if game_state.lines_till_next_level <= 0 {
+            game_state.level += 1;
+            if game_state.level < 13 {
+                game_state.drop_speed = 1.0 + (game_state.level as f32 * 0.28);
+            }
+            game_state.lines_till_next_level = 10 + (game_state.level as f32 * 1.2) as i32;
         }
     }
+}
