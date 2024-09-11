@@ -47,9 +47,13 @@ pub fn updated_input_buffer() {
         if let Some(ref mut raylib_state) = *state {
             for key in USED_KEYS.iter() {
                 if raylib_state.rl.is_key_pressed(*key) {
-                    game_manager.input_buffer.push((*key, KeyboardAction::Pressed));
+                    game_manager
+                        .input_buffer
+                        .push((*key, KeyboardAction::Pressed));
                 } else if raylib_state.rl.is_key_released(*key) {
-                    game_manager.input_buffer.push((*key, KeyboardAction::Released));
+                    game_manager
+                        .input_buffer
+                        .push((*key, KeyboardAction::Released));
                 }
             }
         }

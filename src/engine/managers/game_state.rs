@@ -22,7 +22,7 @@ pub struct GameState {
     pub down_hold: ActionManager,
 }
 
-pub struct  ActionManager {
+pub struct ActionManager {
     pub is_pressed: bool,
     pub move_ticks: i32,
 }
@@ -56,6 +56,33 @@ impl GameState {
                 move_ticks: 0,
             },
         }
+    }
+    pub fn reset(&mut self) {
+        self.arena = vec![vec![0; 21]; 40];
+        self.controlling = 0;
+        self.drop_speed = 1.0;
+        self.drop_ticks = 0.0;
+        self.ground_ticks = 0;
+        self.colors = vec![];
+        self.score = 0;
+        self.level = 1;
+        self.lines_till_next_level = 10;
+        self.game_over = false;
+
+        self.left_hold = ActionManager {
+            is_pressed: false,
+            move_ticks: 0,
+        };
+
+        self.right_hold = ActionManager {
+            is_pressed: false,
+            move_ticks: 0,
+        };
+
+        self.down_hold = ActionManager {
+            is_pressed: false,
+            move_ticks: 0,
+        };
     }
 }
 

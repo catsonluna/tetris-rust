@@ -2,7 +2,7 @@ use crate::engine::{
     lib::RAYLIB_STATE,
     managers::{
         game_manager::{read_game_manager, write_game_manager},
-        game_state::read_game_state,
+        game_state::{read_game_state, write_game_state},
     },
 };
 use raylib::prelude::*;
@@ -32,6 +32,10 @@ fn render_main_menu() {
             let game_manager = &mut write_game_manager();
             game_manager.in_game = true;
             game_manager.running = true;
+            game_manager.input_buffer.clear();
+
+            let game_state = &mut write_game_state();
+            game_state.reset();
         }
 
         if d.gui_button(rrect(30, 360, 115, 30), Some(rstr!("Quit"))) {

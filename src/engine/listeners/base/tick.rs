@@ -2,12 +2,9 @@ use std::fmt::Debug;
 
 use rand::Rng;
 
-use crate::engine::{
-    lib::RAYLIB_STATE,
-    managers::{
-        game_manager::{self,  write_game_manager, KeyboardAction},
-        game_state::{self,  write_game_state},
-    },
+use crate::engine::managers::{
+    game_manager::{self, write_game_manager, KeyboardAction},
+    game_state::{self, write_game_state},
 };
 use raylib::prelude::*;
 
@@ -28,7 +25,6 @@ impl Debug for Action {
             Action::Drop => write!(f, "Drop"),
         }
     }
-    
 }
 
 pub fn on_tick() {
@@ -52,14 +48,8 @@ pub fn on_tick() {
     if !game_manager.running {
         return;
     }
-    check_spawn(
-        game_manager,
-        game_state
-    );
-    check_move(
-        game_manager,
-        game_state,
-    );
+    check_spawn(game_manager, game_state);
+    check_move(game_manager, game_state);
     move_down(game_state, false);
     destoy_lines(game_state);
 
@@ -70,9 +60,7 @@ pub fn on_tick() {
     }
 }
 
-fn should_respawn(
-    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
-) {
+fn should_respawn(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
     if game_state.ground_ticks > 12 {
         game_state.ground_ticks = 0;
         game_state.controlling = 0;
@@ -126,64 +114,49 @@ fn check_move(
     game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager>,
     game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
 ) {
-    let mut state = RAYLIB_STATE.lock().unwrap();
-    if let Some(ref mut raylib_state) = *state {
-        let actions = process_input_buffer(
-            game_manager,
-            game_state,
-        );
+    let actions = process_input_buffer(game_manager, game_state);
 
-        for action in actions {
-            match action {
-                Action::MoveRight => move_right(
-                    game_state,
-                ),
-                Action::MoveLeft => move_left(
-                    game_state,
-                ),
-                Action::MoveDown => move_down(
-                    game_state,true),
-                Action::Drop => drop(game_state),
-            }
+    for action in actions {
+        match action {
+            Action::MoveRight => move_right(game_state),
+            Action::MoveLeft => move_left(game_state),
+            Action::MoveDown => move_down(game_state, true),
+            Action::Drop => drop(game_state),
         }
+    }
 
-
-        if game_state.right_hold.is_pressed {
-            game_state.right_hold.move_ticks += 1;
-            if game_state.right_hold.move_ticks > 5 {
-                move_right(game_state);
-                game_state.right_hold.move_ticks = 4;
-            }
-        }else{
-            game_state.right_hold.move_ticks = 0;
+    if game_state.right_hold.is_pressed {
+        game_state.right_hold.move_ticks += 1;
+        if game_state.right_hold.move_ticks > 5 {
+            move_right(game_state);
+            game_state.right_hold.move_ticks = 4;
         }
+    } else {
+        game_state.right_hold.move_ticks = 0;
+    }
 
-        if game_state.left_hold.is_pressed {
-            game_state.left_hold.move_ticks += 1;
-            if game_state.left_hold.move_ticks > 5 {
-                move_left(game_state);
-                game_state.left_hold.move_ticks = 4;
-            }
-        }else{
-            game_state.left_hold.move_ticks = 0;
+    if game_state.left_hold.is_pressed {
+        game_state.left_hold.move_ticks += 1;
+        if game_state.left_hold.move_ticks > 5 {
+            move_left(game_state);
+            game_state.left_hold.move_ticks = 4;
         }
+    } else {
+        game_state.left_hold.move_ticks = 0;
+    }
 
-        if game_state.down_hold.is_pressed {
-            game_state.down_hold.move_ticks += 1;
-            if game_state.down_hold.move_ticks > 5 {
-                move_down(game_state, true);
-                game_state.down_hold.move_ticks = 4;
-            }
-        }else{
-            game_state.down_hold.move_ticks = 0;
+    if game_state.down_hold.is_pressed {
+        game_state.down_hold.move_ticks += 1;
+        if game_state.down_hold.move_ticks > 5 {
+            move_down(game_state, true);
+            game_state.down_hold.move_ticks = 4;
         }
-
+    } else {
+        game_state.down_hold.move_ticks = 0;
     }
 }
 
-fn move_right(
-    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
-) {
+fn move_right(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
     let mut can_move = true;
     // go over each row, and get the furthest right value that is 1, then check if it can move right
     for y in 0..game_state.arena.len() {
@@ -220,9 +193,7 @@ fn move_right(
     }
 }
 
-fn move_left(
-    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
-) {
+fn move_left(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
     let mut can_move = true;
 
     // Go over each row and get the furthest left value that is 1, then check if it can move left
@@ -260,7 +231,10 @@ fn move_left(
     }
 }
 
-fn move_down(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>, forced: bool) {
+fn move_down(
+    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
+    forced: bool,
+) {
     let mut changed = false;
 
     if game_state.drop_ticks > 0.0 && !forced {
@@ -297,9 +271,7 @@ fn move_down(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameSt
     }
 }
 
-fn drop(
-    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
-) {
+fn drop(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
     let mut done = false;
     let mut changed = false;
 
@@ -349,10 +321,7 @@ fn check_game_over(
     }
 }
 
-fn destoy_lines(
-    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
-) {
-
+fn destoy_lines(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
     let mut was_despawned = true;
     let mut despawned = 0;
     while was_despawned {
@@ -387,7 +356,7 @@ fn destoy_lines(
         if game_state.lines_till_next_level <= 0 {
             game_state.level += 1;
             if game_state.level < 13 {
-                game_state.drop_speed = 1.0 + (game_state.level as f32 * 0.38);
+                game_state.drop_speed = 1.0 + (game_state.level as f32 * 0.87);
             }
             game_state.lines_till_next_level = 10 + (game_state.level as f32 * 1.2) as i32;
         }
@@ -401,14 +370,13 @@ fn process_input_buffer(
     let mut actions: Vec<&Action> = vec![];
 
     for (key, key_action) in game_manager.input_buffer.iter() {
-        if let Some(action) = get_action(key) 
-        {
+        if let Some(action) = get_action(key) {
             match action {
                 Action::MoveRight => {
                     if key_action == &KeyboardAction::Pressed {
                         actions.push(&Action::MoveRight);
                         game_state.right_hold.is_pressed = true;
-                    }else {
+                    } else {
                         game_state.right_hold.is_pressed = false;
                     }
                 }
@@ -416,7 +384,7 @@ fn process_input_buffer(
                     if key_action == &KeyboardAction::Pressed {
                         actions.push(&Action::MoveLeft);
                         game_state.left_hold.is_pressed = true;
-                    }else{
+                    } else {
                         game_state.left_hold.is_pressed = false;
                     }
                 }
@@ -424,7 +392,7 @@ fn process_input_buffer(
                     if key_action == &KeyboardAction::Pressed {
                         actions.push(&Action::MoveDown);
                         game_state.down_hold.is_pressed = true;
-                    }else{
+                    } else {
                         game_state.down_hold.is_pressed = false;
                     }
                 }
@@ -439,7 +407,6 @@ fn process_input_buffer(
 
     actions
 }
-
 
 fn get_action(key: &KeyboardKey) -> Option<Action> {
     match key {
