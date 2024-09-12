@@ -105,27 +105,12 @@ fn check_spawn(
             vec![0, 0, 1, 0, 0],
         ];
 
-        let shape_o = vec![
+        let shape_l = vec![
+            vec![1, 0, 0, 0, 0],
+            vec![1, 0, 0, 0, 0],
+            vec![1, 0, 0, 0, 0],
+            vec![1, 0, 0, 0, 0],
             vec![1, 1, 1, 1, 1],
-            vec![1, 0, 0, 0, 1],
-            vec![1, 0, 0, 0, 1],
-            vec![1, 0, 0, 0, 1],
-            vec![1, 1, 1, 1, 1],
-        ];
-
-        let shape_s = vec![
-            vec![0, 1, 1, 1, 0],
-            vec![1, 0, 0, 0, 1],
-            vec![0, 1, 1, 1, 0],
-            vec![1, 0, 0, 0, 1],
-            vec![0, 1, 1, 1, 0],
-        ];
-        let shape_z = vec![
-            vec![1, 1, 1, 1, 0],
-            vec![0, 0, 0, 1, 0],
-            vec![0, 0, 1, 0, 0],
-            vec![0, 1, 0, 0, 0],
-            vec![0, 1, 1, 1, 1],
         ];
 
         let shape_j = vec![
@@ -136,22 +121,9 @@ fn check_spawn(
             vec![1, 1, 1, 1, 1],
         ];
 
-        let shape_l = vec![
-            vec![1, 0, 0, 0, 0],
-            vec![1, 0, 0, 0, 0],
-            vec![1, 0, 0, 0, 0],
-            vec![1, 0, 0, 0, 0],
-            vec![1, 1, 1, 1, 1],
-        ];
 
-        let shape_cent = vec![
-            vec![0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0],
-            vec![0, 0, 1, 0, 0],
-            vec![0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0],
-        ];
-        let shapes = vec![shape_r, shape_i, shape_t, shape_o, shape_s, shape_z, shape_j, shape_l];
+
+        let shapes = vec![shape_r, shape_i, shape_t, shape_l, shape_j];
         let rng = &mut game_manager.rng;
 
         let shape = &shapes[rng.gen_range(0..shapes.len())];

@@ -68,7 +68,7 @@ impl GameState {
     pub fn reset(&mut self) {
         self.arena = vec![vec![0; 21]; 41];
         self.controlling = 0;
-        self.drop_speed = 0.0;
+        self.drop_speed = 1.0;
         self.drop_ticks = 0.0;
         self.ground_ticks = 0;
         self.colors = vec![];
