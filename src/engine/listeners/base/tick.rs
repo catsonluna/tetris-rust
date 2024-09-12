@@ -56,8 +56,6 @@ pub fn on_tick() {
     destoy_lines(game_state);
 
     if game_manager.input_buffer.len() > 0 {
-        println!("input buffer: {:?}", game_manager.input_buffer);
-
         game_manager.input_buffer.clear();
     }
 }
@@ -82,11 +80,11 @@ fn check_spawn(
             vec![0, 0, 0, 0, 0],
         ];
         let shape_r = vec![
-            vec![1, 1, 1, 1, 1],
-            vec![1, 1, 1, 1, 1],
-            vec![1, 1, 1, 1, 1],
-            vec![1, 1, 1, 1, 1],
-            vec![1, 1, 1, 1, 1],
+            vec![0, 0, 0, 0, 0],
+            vec![0, 1, 1, 1, 0],
+            vec![0, 1, 1, 1, 0],
+            vec![0, 1, 1, 1, 0],
+            vec![0, 0, 0, 0, 0],
         ];
 
         let shape_i = vec![
@@ -98,27 +96,28 @@ fn check_spawn(
         ];
 
         let shape_t = vec![
-            vec![1, 1, 1, 1, 1],
             vec![0, 0, 1, 0, 0],
             vec![0, 0, 1, 0, 0],
-            vec![0, 0, 1, 0, 0],
-            vec![0, 0, 1, 0, 0],
+            vec![0, 1, 1, 1, 0],
+            vec![0, 0, 0, 0, 0],
+            vec![0, 0, 0, 0, 0],
         ];
+
 
         let shape_l = vec![
-            vec![1, 0, 0, 0, 0],
-            vec![1, 0, 0, 0, 0],
-            vec![1, 0, 0, 0, 0],
-            vec![1, 0, 0, 0, 0],
-            vec![1, 1, 1, 1, 1],
+            vec![0, 0, 1, 0, 0],
+            vec![0, 0, 1, 0, 0],
+            vec![0, 0, 1, 0, 0],
+            vec![0, 0, 1, 1, 1],
+            vec![0, 0, 0, 0, 0],
         ];
 
-        let shape_j = vec![
-            vec![0, 0, 0, 0, 1],
-            vec![0, 0, 0, 0, 1],
-            vec![0, 0, 0, 0, 1],
-            vec![0, 0, 0, 0, 1],
-            vec![1, 1, 1, 1, 1],
+        let shape_j =  vec![
+            vec![0, 0, 1, 0, 0],
+            vec![0, 0, 1, 0, 0],
+            vec![0, 0, 1, 0, 0],
+            vec![1, 1, 1, 0, 0],
+            vec![0, 0, 0, 0, 0],
         ];
 
 
@@ -305,8 +304,6 @@ fn move_down(
         }
     }
 
-    println!("can move down: {}", can_move_down);
-
     // If it can move down, move everything that is controlling down
     if can_move_down {
         for y in (0..game_state.arena.len()).rev() {
@@ -471,18 +468,22 @@ fn rotate(
     let mut new_matrix = vec![vec![0; matrix.len()]; matrix[0].len()];
     for i in 0..matrix.len() {
         for j in 0..matrix[i].len() {
-            new_matrix[matrix[i].len() - 1 - j][i] = matrix[i][j];
+            new_matrix[j][matrix.len() - 1 - i] = matrix[i][j];
         }
     }
+    println!("\n\n\n\n\n\n");
+    for i in 0..matrix.len() {
+        println!("{:?}", matrix[i]);
+    }
+
     
     matrix = new_matrix;
 
     for i in 0..matrix.len() {
         for j in 0..matrix[i].len() {
             if matrix[i][j] == 1 {
-                // get the position of the block based on how far it is from (2, 2)
-                let x = i as i32 - 2;
-                let y = j as i32 - 2;
+                let x = j as i32 - 2;
+                let y = i as i32 - 2;
 
                 let pos_x = center_x as i32 + x;
                 let pos_y = center_y as i32 + y;
@@ -494,6 +495,13 @@ fn rotate(
             }
         }
     }
+
+    println!("\n");
+
+    for i in 0..matrix.len() {
+        println!("{:?}", matrix[i]);
+    }
+
 
     // go over each row in arena
     for y in 0..game_state.arena.len() {
@@ -509,8 +517,8 @@ fn rotate(
         for j in 0..matrix[i].len() {
             if matrix[i][j] == 1 {
                 // get the position of the block based on how far it is from (2, 2)
-                let x = i as i32 - 2;
-                let y = j as i32 - 2;
+                let x = j as i32 - 2;
+                let y = i as i32 - 2;
 
                 let pos_x = center_x as i32 + x;
                 let pos_y = center_y as i32 + y;
