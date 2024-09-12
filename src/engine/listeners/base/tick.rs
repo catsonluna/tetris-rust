@@ -161,7 +161,7 @@ fn check_move(
         match action {
             Action::MoveRight => move_right(game_state),
             Action::MoveLeft => move_left(game_state),
-            Action::MoveDown => move_down(game_state, true),
+            Action::MoveDown => _ = move_down(game_state, true),
             Action::Drop => drop(game_state),
             Action::Rotate => rotate(game_state),
         }
@@ -282,78 +282,64 @@ fn move_left(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameSt
 fn move_down(
     game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
     forced: bool,
-) {
-    let mut changed = false;
+) -> bool {
+    let mut can_move_down = true;
 
     if game_state.drop_ticks > 0.0 && !forced {
         game_state.drop_ticks -= game_state.drop_speed;
-        return;
+        return false;
     }
+
+    // Check if the piece can move down
     for y in (0..game_state.arena.len()).rev() {
         for x in 0..game_state.arena[y].len() {
             if game_state.arena[y][x] == game_state.controlling {
-                if y + 1 >= game_state.arena.len() || game_state.arena[y + 1][x] != 0 {
-                    changed = true;
+                if y + 1 >= game_state.arena.len() || game_state.arena[y + 1][x] != 0 && game_state.arena[y + 1][x] != game_state.controlling {
+                    can_move_down = false;
+                    break;
                 }
             }
         }
-        if changed {
-            game_state.ground_ticks += 1;
+        if !can_move_down {
             break;
-        } else {
-            for x in 0..game_state.arena[y].len() {
-                if game_state.arena[y][x] == game_state.controlling {
-                    if y + 1 < game_state.arena.len() {
-                        if game_state.arena[y + 1][x] == 0 {
-                            game_state.arena[y + 1][x] = game_state.controlling;
-                            game_state.arena[y][x] = 0;
-                        }
-                    }
-                }
-            }
         }
     }
 
-    if !changed {
-        game_state.drop_ticks = 6.0;
-        game_state.current_center.1 += 1;
-    }
-}
+    println!("can move down: {}", can_move_down);
 
-fn drop(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
-    let mut done = false;
-    let mut changed = false;
-
-    while !done {
+    // If it can move down, move everything that is controlling down
+    if can_move_down {
         for y in (0..game_state.arena.len()).rev() {
             for x in 0..game_state.arena[y].len() {
                 if game_state.arena[y][x] == game_state.controlling {
-                    if y + 1 >= game_state.arena.len() || game_state.arena[y + 1][x] != 0 {
-                        changed = true;
-                    }
-                }
-            }
-            if changed {
-                game_state.ground_ticks += 1;
-                done = true;
-                break;
-            } else {
-                for x in 0..game_state.arena[y].len() {
-                    if game_state.arena[y][x] == game_state.controlling {
-                        if y + 1 < game_state.arena.len() {
-                            if game_state.arena[y + 1][x] == 0 {
-                                game_state.arena[y + 1][x] = game_state.controlling;
-                                game_state.arena[y][x] = 0;
-                            }
-                        }
+                    if y + 1 < game_state.arena.len() && game_state.arena[y + 1][x] == 0 {
+                        game_state.arena[y + 1][x] = game_state.controlling;
+                        game_state.arena[y][x] = 0;
                     }
                 }
             }
         }
+        game_state.drop_ticks = 6.0;
+        game_state.current_center.1 += 1;
+        return true;
+    } else {
+        // If it can't move down, update the ground ticks
+        game_state.ground_ticks += 1;
+        game_state.controlling = 0;
+        game_state.drop_ticks = 0.0;
+        return false;
     }
+}
+
+
+fn drop(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
+    while move_down(game_state, true) {}
+
+    // If no more moves possible, update state
     game_state.controlling = 0;
     game_state.drop_ticks = 0.0;
 }
+
 
 fn check_game_over(
     game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager>,
