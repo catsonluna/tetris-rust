@@ -67,7 +67,7 @@ fn render_game() {
                 if val != 0 {
                     d.draw_rectangle(
                         (624.0 + (x as f32 * size)) as i32,
-                        (36.0 + (y as f32 * size)) as i32,
+                        (20.0 + (y as f32 * size)) as i32,
                         size as i32,
                         size as i32,
                         read_game_state()

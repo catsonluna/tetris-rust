@@ -14,6 +14,7 @@ enum Action {
     MoveLeft,
     MoveDown,
     Drop,
+    Rotate
 }
 
 impl Debug for Action {
@@ -23,6 +24,7 @@ impl Debug for Action {
             Action::MoveLeft => write!(f, "MoveLeft"),
             Action::MoveDown => write!(f, "MoveDown"),
             Action::Drop => write!(f, "Drop"),
+            Action::Rotate => write!(f, "Rotate"),
         }
     }
 }
@@ -72,6 +74,13 @@ fn check_spawn(
     game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
 ) {
     if game_state.controlling == 0 {
+        let _shape_none = vec![
+            vec![0, 0, 0, 0, 0],
+            vec![0, 0, 0, 0, 0],
+            vec![0, 0, 0, 0, 0],
+            vec![0, 0, 0, 0, 0],
+            vec![0, 0, 0, 0, 0],
+        ];
         let shape_r = vec![
             vec![1, 1, 1, 1, 1],
             vec![1, 1, 1, 1, 1],
@@ -88,18 +97,78 @@ fn check_spawn(
             vec![0, 0, 1, 0, 0],
         ];
 
+        let shape_t = vec![
+            vec![1, 1, 1, 1, 1],
+            vec![0, 0, 1, 0, 0],
+            vec![0, 0, 1, 0, 0],
+            vec![0, 0, 1, 0, 0],
+            vec![0, 0, 1, 0, 0],
+        ];
+
+        let shape_o = vec![
+            vec![1, 1, 1, 1, 1],
+            vec![1, 0, 0, 0, 1],
+            vec![1, 0, 0, 0, 1],
+            vec![1, 0, 0, 0, 1],
+            vec![1, 1, 1, 1, 1],
+        ];
+
+        let shape_s = vec![
+            vec![0, 1, 1, 1, 0],
+            vec![1, 0, 0, 0, 1],
+            vec![0, 1, 1, 1, 0],
+            vec![1, 0, 0, 0, 1],
+            vec![0, 1, 1, 1, 0],
+        ];
+        let shape_z = vec![
+            vec![1, 1, 1, 1, 0],
+            vec![0, 0, 0, 1, 0],
+            vec![0, 0, 1, 0, 0],
+            vec![0, 1, 0, 0, 0],
+            vec![0, 1, 1, 1, 1],
+        ];
+
+        let shape_j = vec![
+            vec![0, 0, 0, 0, 1],
+            vec![0, 0, 0, 0, 1],
+            vec![0, 0, 0, 0, 1],
+            vec![0, 0, 0, 0, 1],
+            vec![1, 1, 1, 1, 1],
+        ];
+
+        let shape_l = vec![
+            vec![1, 0, 0, 0, 0],
+            vec![1, 0, 0, 0, 0],
+            vec![1, 0, 0, 0, 0],
+            vec![1, 0, 0, 0, 0],
+            vec![1, 1, 1, 1, 1],
+        ];
+
+        let shape_cent = vec![
+            vec![0, 0, 0, 0, 0],
+            vec![0, 0, 0, 0, 0],
+            vec![0, 0, 1, 0, 0],
+            vec![0, 0, 0, 0, 0],
+            vec![0, 0, 0, 0, 0],
+        ];
+        let shapes = vec![shape_r, shape_i, shape_t, shape_o, shape_s, shape_z, shape_j, shape_l];
         let rng = &mut game_manager.rng;
 
-        // make a random 5x5 shape with 0s and 1s
-        let shape = if rng.gen::<bool>() { shape_r } else { shape_i };
+        let shape = &shapes[rng.gen_range(0..shapes.len())];
+
+
+        game_state.current_piece = shape.clone();
 
         let random = rng.gen::<i32>();
 
         for (y, row) in shape.iter().enumerate() {
             for (x, &val) in row.iter().enumerate() {
-                game_state.arena[y][x + 8] = if val == 1 { random } else { 0 };
+                game_state.arena[y ][x + 8] = if val == 1 { random } else { 0 };
             }
         }
+
+        game_state.current_center = (10, 2);
+
 
         game_state.controlling = random;
         let color = (
@@ -122,6 +191,7 @@ fn check_move(
             Action::MoveLeft => move_left(game_state),
             Action::MoveDown => move_down(game_state, true),
             Action::Drop => drop(game_state),
+            Action::Rotate => rotate(game_state),
         }
     }
 
@@ -190,7 +260,11 @@ fn move_right(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameS
                 }
             }
         }
+
+        // move the center of the piece to the right
+        game_state.current_center.0 += 1;
     }
+
 }
 
 fn move_left(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
@@ -228,6 +302,8 @@ fn move_left(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameSt
                 }
             }
         }
+        // move the center of the piece to the left
+        game_state.current_center.0 -= 1;
     }
 }
 
@@ -268,6 +344,7 @@ fn move_down(
 
     if !changed {
         game_state.drop_ticks = 6.0;
+        game_state.current_center.1 += 1;
     }
 }
 
@@ -401,6 +478,11 @@ fn process_input_buffer(
                         actions.push(&Action::Drop);
                     }
                 }
+                Action::Rotate => {
+                    if key_action == &KeyboardAction::Pressed {
+                        actions.push(&Action::Rotate);
+                    }
+                }
             }
         }
     }
@@ -414,6 +496,73 @@ fn get_action(key: &KeyboardKey) -> Option<Action> {
         KeyboardKey::KEY_LEFT => Some(Action::MoveLeft),
         KeyboardKey::KEY_DOWN => Some(Action::MoveDown),
         KeyboardKey::KEY_SPACE => Some(Action::Drop),
+        KeyboardKey::KEY_UP => Some(Action::Rotate),
         _ => None,
     }
+}
+
+fn rotate(
+    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
+) {
+    // Remove the current piece from the arena
+    let (center_x, center_y) = game_state.current_center;
+    let controlling_id = game_state.controlling;
+    let mut matrix = game_state.current_piece.clone();
+
+
+    let mut new_matrix = vec![vec![0; matrix.len()]; matrix[0].len()];
+    for i in 0..matrix.len() {
+        for j in 0..matrix[i].len() {
+            new_matrix[matrix[i].len() - 1 - j][i] = matrix[i][j];
+        }
+    }
+    
+    matrix = new_matrix;
+
+    for i in 0..matrix.len() {
+        for j in 0..matrix[i].len() {
+            if matrix[i][j] == 1 {
+                // get the position of the block based on how far it is from (2, 2)
+                let x = i as i32 - 2;
+                let y = j as i32 - 2;
+
+                let pos_x = center_x as i32 + x;
+                let pos_y = center_y as i32 + y;
+
+                if pos_x < 0 || pos_x >= game_state.arena[0].len() as i32 || pos_y < 0 || pos_y >= game_state.arena.len() as i32 || (game_state.arena[pos_y as usize][pos_x as usize] != 0 && game_state.arena[pos_y as usize][pos_x as usize] != controlling_id) {
+                    return;
+                }
+
+            }
+        }
+    }
+
+    // go over each row in arena
+    for y in 0..game_state.arena.len() {
+        // go over each column in arena
+        for x in 0..game_state.arena[y].len() {
+            if game_state.arena[y][x] == controlling_id {
+                game_state.arena[y][x] = 0;
+            }
+        }
+    }
+
+    for i in 0..matrix.len() {
+        for j in 0..matrix[i].len() {
+            if matrix[i][j] == 1 {
+                // get the position of the block based on how far it is from (2, 2)
+                let x = i as i32 - 2;
+                let y = j as i32 - 2;
+
+                let pos_x = center_x as i32 + x;
+                let pos_y = center_y as i32 + y;
+
+                game_state.arena[pos_y as usize][pos_x as usize] = controlling_id;
+            }
+        }
+    }
+
+    // Update the current piece and center
+    game_state.current_piece = matrix;
+
 }

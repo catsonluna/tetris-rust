@@ -5,6 +5,8 @@ use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 pub struct GameState {
     pub controlling: i32,
     pub arena: Vec<Vec<i32>>,
+    pub current_piece: Vec<Vec<i32>>,
+    pub current_center: (usize, usize),
 
     pub game_over: bool,
 
@@ -20,6 +22,7 @@ pub struct GameState {
     pub left_hold: ActionManager,
     pub right_hold: ActionManager,
     pub down_hold: ActionManager,
+
 }
 
 pub struct ActionManager {
@@ -55,12 +58,17 @@ impl GameState {
                 is_pressed: false,
                 move_ticks: 0,
             },
+
+            current_piece: vec![],
+            current_center: (0, 0),
+            
+            
         }
     }
     pub fn reset(&mut self) {
-        self.arena = vec![vec![0; 21]; 40];
+        self.arena = vec![vec![0; 21]; 41];
         self.controlling = 0;
-        self.drop_speed = 1.0;
+        self.drop_speed = 0.0;
         self.drop_ticks = 0.0;
         self.ground_ticks = 0;
         self.colors = vec![];
@@ -83,6 +91,9 @@ impl GameState {
             is_pressed: false,
             move_ticks: 0,
         };
+
+        self.current_piece = vec![];
+        self.current_center = (0, 0);
     }
 }
 
