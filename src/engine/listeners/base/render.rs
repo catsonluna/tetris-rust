@@ -2,7 +2,7 @@ use crate::engine::{
     lib::RAYLIB_STATE,
     managers::{
         game_manager::{read_game_manager, write_game_manager},
-        game_state::{read_game_state, write_game_state},
+        game_state::{read_game_state, write_game_state, GameState},
     },
 };
 use raylib::prelude::*;
@@ -34,8 +34,9 @@ fn render_main_menu() {
             game_manager.running = true;
             game_manager.input_buffer.clear();
 
-            let game_state = &mut write_game_state();
-            game_state.reset();
+
+            let mut game_state = write_game_state();
+            *game_state = GameState::new();
         }
 
         if d.gui_button(rrect(30, 360, 115, 30), Some(rstr!("Quit"))) {
@@ -124,5 +125,27 @@ fn render_game() {
             20,
             Color::BLACK,
         );
+
+        // on the left side render the held piece
+        if !game_state.held_piece.is_empty() {
+            for (y, row) in game_state.held_piece.iter().enumerate() {
+                for (x, &val) in row.iter().enumerate() {
+                    if val != 0 {
+                        d.draw_rectangle(
+                            (400.0 + (x as f32 * size)) as i32,
+                            (256.0 + (y as f32 * size)) as i32,
+                            size as i32,
+                            size as i32,
+                            game_state
+                                .colors
+                                .iter()
+                                .find(|(id, _)| *id == game_state.held_id)
+                                .unwrap()
+                                .1,
+                        );
+                    }
+                }
+            }
+        }
     }
 }

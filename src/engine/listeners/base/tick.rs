@@ -14,7 +14,8 @@ enum Action {
     MoveLeft,
     MoveDown,
     Drop,
-    Rotate
+    Rotate,
+    Hold
 }
 
 impl Debug for Action {
@@ -25,6 +26,7 @@ impl Debug for Action {
             Action::MoveDown => write!(f, "MoveDown"),
             Action::Drop => write!(f, "Drop"),
             Action::Rotate => write!(f, "Rotate"),
+            Action::Hold => write!(f, "Hold"),
         }
     }
 }
@@ -108,7 +110,7 @@ fn check_spawn(
             vec![0, 0, 1, 0, 0],
             vec![0, 0, 1, 0, 0],
             vec![0, 0, 1, 0, 0],
-            vec![0, 0, 1, 1, 1],
+            vec![0, 0, 1, 1, 0],
             vec![0, 0, 0, 0, 0],
         ];
 
@@ -116,7 +118,7 @@ fn check_spawn(
             vec![0, 0, 1, 0, 0],
             vec![0, 0, 1, 0, 0],
             vec![0, 0, 1, 0, 0],
-            vec![1, 1, 1, 0, 0],
+            vec![0, 1, 1, 0, 0],
             vec![0, 0, 0, 0, 0],
         ];
 
@@ -163,6 +165,7 @@ fn check_move(
             Action::MoveDown => _ = move_down(game_state, true),
             Action::Drop => drop(game_state),
             Action::Rotate => rotate(game_state),
+            Action::Hold => hold(game_state),
         }
     }
 
@@ -438,6 +441,11 @@ fn process_input_buffer(
                         actions.push(&Action::Rotate);
                     }
                 }
+                Action::Hold => {
+                    if key_action == &KeyboardAction::Pressed {
+                        actions.push(&Action::Hold);
+                    }
+                }
             }
         }
     }
@@ -452,6 +460,7 @@ fn get_action(key: &KeyboardKey) -> Option<Action> {
         KeyboardKey::KEY_DOWN => Some(Action::MoveDown),
         KeyboardKey::KEY_SPACE => Some(Action::Drop),
         KeyboardKey::KEY_UP => Some(Action::Rotate),
+        KeyboardKey::KEY_LEFT_SHIFT => Some(Action::Hold),
         _ => None,
     }
 }
@@ -471,11 +480,6 @@ fn rotate(
             new_matrix[j][matrix.len() - 1 - i] = matrix[i][j];
         }
     }
-    println!("\n\n\n\n\n\n");
-    for i in 0..matrix.len() {
-        println!("{:?}", matrix[i]);
-    }
-
     
     matrix = new_matrix;
 
@@ -495,13 +499,6 @@ fn rotate(
             }
         }
     }
-
-    println!("\n");
-
-    for i in 0..matrix.len() {
-        println!("{:?}", matrix[i]);
-    }
-
 
     // go over each row in arena
     for y in 0..game_state.arena.len() {
@@ -530,5 +527,55 @@ fn rotate(
 
     // Update the current piece and center
     game_state.current_piece = matrix;
+
+}
+
+fn hold(
+    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>
+)
+{
+    let held_piece = game_state.held_piece.clone();
+    let current_piece = game_state.current_piece.clone();
+    
+    // check if something is held
+    if held_piece.len() == 0 {
+
+        // remove the current piece from the arena
+        for y in 0..game_state.arena.len() {
+            for x in 0..game_state.arena[y].len() {
+                if game_state.arena[y][x] == game_state.controlling {
+                    game_state.arena[y][x] = 0;
+                }
+            }
+        }
+
+        game_state.held_piece = current_piece;
+        game_state.held_id = game_state.controlling;
+        game_state.controlling = 0;
+    } else {
+        // remove the current piece from the arena
+        for y in 0..game_state.arena.len() {
+            for x in 0..game_state.arena[y].len() {
+                if game_state.arena[y][x] == game_state.controlling {
+                    game_state.arena[y][x] = 0;
+                }
+            }
+        }
+
+        // spawn the held piece
+        for (y, row) in held_piece.iter().enumerate() {
+            for (x, &val) in row.iter().enumerate() {
+                game_state.arena[y][x + 8] = if val == 1 { game_state.controlling } else { 0 };
+            }
+        }
+
+        game_state.held_piece = current_piece;
+        game_state.current_piece = held_piece;
+        game_state.held_id = game_state.controlling;
+        game_state.controlling = game_state.held_id;
+        game_state.current_center = (10, 2);
+
+    }
+
 
 }

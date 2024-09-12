@@ -7,6 +7,8 @@ pub struct GameState {
     pub arena: Vec<Vec<i32>>,
     pub current_piece: Vec<Vec<i32>>,
     pub current_center: (usize, usize),
+    pub held_piece: Vec<Vec<i32>>,
+    pub held_id: i32,
 
     pub game_over: bool,
 
@@ -33,7 +35,7 @@ pub struct ActionManager {
 impl GameState {
     pub fn new() -> Self {
         Self {
-            arena: vec![vec![0; 21]; 40],
+            arena: vec![vec![0; 21]; 41],
             controlling: 0,
             drop_speed: 1.0,
             drop_ticks: 0.0,
@@ -61,39 +63,11 @@ impl GameState {
 
             current_piece: vec![],
             current_center: (0, 0),
+            held_piece: vec![],
+            held_id: 0,
             
             
         }
-    }
-    pub fn reset(&mut self) {
-        self.arena = vec![vec![0; 21]; 41];
-        self.controlling = 0;
-        self.drop_speed = 1.0;
-        self.drop_ticks = 0.0;
-        self.ground_ticks = 0;
-        self.colors = vec![];
-        self.score = 0;
-        self.level = 1;
-        self.lines_till_next_level = 10;
-        self.game_over = false;
-
-        self.left_hold = ActionManager {
-            is_pressed: false,
-            move_ticks: 0,
-        };
-
-        self.right_hold = ActionManager {
-            is_pressed: false,
-            move_ticks: 0,
-        };
-
-        self.down_hold = ActionManager {
-            is_pressed: false,
-            move_ticks: 0,
-        };
-
-        self.current_piece = vec![];
-        self.current_center = (0, 0);
     }
 }
 
