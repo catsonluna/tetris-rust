@@ -42,6 +42,7 @@ pub fn on_tick() {
     if !game_manager.running {
         return;
     }
+    clear_ghost(game_state);
     should_respawn(game_state);
     check_game_over(game_manager, game_state);
     if !game_manager.in_game {
@@ -55,7 +56,7 @@ pub fn on_tick() {
     check_move(game_manager, game_state);
     move_down(game_state, false);
     destoy_lines(game_state);
-
+    draw_ghost(game_state);
     if game_manager.input_buffer.len() > 0 {
         game_manager.input_buffer.clear();
     }
@@ -495,7 +496,10 @@ fn rotate(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState
     game_state.current_piece.layout = matrix;
 }
 
-fn hold(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>, game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager>) {
+fn hold(
+    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
+    game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager>,
+) {
     if !game_state.has_held {
         game_state.has_held = true;
     } else {
@@ -517,10 +521,8 @@ fn hold(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
         game_state.held_piece = current_piece;
         game_state.controlling = 0;
     } else {
-
         // create a new controlling id for the held piece
         let random = game_manager.rng.gen::<i32>();
-
 
         // spawn the held piece
         for (y, row) in held_piece.layout.iter().enumerate() {
@@ -536,5 +538,86 @@ fn hold(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
         game_state.held_piece = current_piece;
 
         game_state.current_center = (10, 2);
+    }
+}
+
+fn clear_ghost(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
+    for y in 0..game_state.arena.len() {
+        for x in 0..game_state.arena[y].len() {
+            if game_state.arena[y][x] == 2 {
+                game_state.arena[y][x] = 0;
+            }
+        }
+    }
+}
+
+fn draw_ghost(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
+
+
+    // place -1 where the piece would land if it was dropped, without actually moving it
+    let controlling = game_state.controlling.clone();
+    let arena_backup = game_state.arena.clone();
+
+    while move_down_ghost(game_state) {}
+
+    for y in 0..game_state.arena.len() {
+        for x in 0..game_state.arena[y].len() {
+            if game_state.arena[y][x] == controlling {
+                game_state.arena[y][x] = 2;
+            }
+        }
+    }
+
+    for y in 0..arena_backup.len() {
+        for x in 0..arena_backup[y].len() {
+            if arena_backup[y][x] == controlling {
+                game_state.arena[y][x] = controlling;
+            }
+        }
+    }
+
+
+    game_state.controlling = controlling;
+
+}
+
+
+fn move_down_ghost(
+    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
+) -> bool {
+    let mut can_move_down = true;
+    // Check if the piece can move down
+    for y in (0..game_state.arena.len()).rev() {
+        for x in 0..game_state.arena[y].len() {
+            if game_state.arena[y][x] == game_state.controlling {
+                if y + 1 >= game_state.arena.len()
+                    || game_state.arena[y + 1][x] != 0
+                        && game_state.arena[y + 1][x] != game_state.controlling
+                {
+                    can_move_down = false;
+                    break;
+                }
+            }
+        }
+        if !can_move_down {
+            break;
+        }
+    }
+
+    // If it can move down, move everything that is controlling down
+    if can_move_down {
+        for y in (0..game_state.arena.len()).rev() {
+            for x in 0..game_state.arena[y].len() {
+                if game_state.arena[y][x] == game_state.controlling {
+                    if y + 1 < game_state.arena.len() && game_state.arena[y + 1][x] == 0 {
+                        game_state.arena[y + 1][x] = game_state.controlling;
+                        game_state.arena[y][x] = 0;
+                    }
+                }
+            }
+        }
+        return true;
+    } else {
+        return false;
     }
 }

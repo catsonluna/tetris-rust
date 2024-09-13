@@ -64,7 +64,7 @@ fn render_game() {
 
         for (y, row) in game_state.arena.iter().enumerate() {
             for (x, &val) in row.iter().enumerate() {
-                if val != 0 {
+                if val != 0 && val != 2 {
                     d.draw_rectangle(
                         (624.0 + (x as f32 * size)) as i32,
                         (20.0 + (y as f32 * size)) as i32,
@@ -78,6 +78,15 @@ fn render_game() {
                             .unwrap()
                             .1
                             .color,
+                    );
+                }
+                if val == 2 {
+                    d.draw_rectangle(
+                        (624.0 + (x as f32 * size)) as i32,
+                        (20.0 + (y as f32 * size)) as i32,
+                        size as i32,
+                        size as i32,
+                        Color::GRAY,
                     );
                 }
             }
