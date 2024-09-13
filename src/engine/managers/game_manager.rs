@@ -139,6 +139,30 @@ impl GameManager {
                     color: Color::DARKGREEN,
                 },
                 Block {
+                    layout: vec![
+                        vec![0, 0, 0, 0, 0],
+                        vec![0, 0, 1, 0, 0],
+                        vec![0, 0, 1, 0, 0],
+                        vec![0, 0, 1, 1, 0],
+                        vec![0, 0, 0, 0, 0],
+                    ],
+                    can_rotate: true,
+                    color: Color::GREEN,
+                    name: "Small L".to_string(),
+                },
+                Block {
+                    name: "Small J".to_string(),
+                    layout: vec![
+                        vec![0, 0, 0, 0, 0],
+                        vec![0, 0, 1, 0, 0],
+                        vec![0, 0, 1, 0, 0],
+                        vec![0, 1, 1, 0, 0],
+                        vec![0, 0, 0, 0, 0],
+                    ],
+                    can_rotate: true,
+                    color: Color::DARKGREEN,
+                },
+                Block {
                     name: "I".to_string(),
                     layout: vec![
                         vec![0, 0, 1, 0, 0],

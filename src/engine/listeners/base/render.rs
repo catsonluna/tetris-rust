@@ -203,7 +203,7 @@ fn render_game() {
             for (y, row) in piece.layout.iter().enumerate() {
                 for (x, &val) in row.iter().enumerate() {
                     let cell_x = piece_x + (x as i32 * queue_size); // Calculate the cell's X position
-                    let cell_y = piece_y + (y as i32 * queue_size); // Calculate the cell's Y position
+                    let cell_y = piece_y + (y as i32 * queue_size) + queue_size * i as i32;
 
                     if val != 0 {
                         d.draw_rectangle(cell_x, cell_y, queue_size, queue_size, piece.color);
