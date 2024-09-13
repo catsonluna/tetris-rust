@@ -34,7 +34,6 @@ fn render_main_menu() {
             game_manager.running = true;
             game_manager.input_buffer.clear();
 
-
             let mut game_state = write_game_state();
             *game_state = GameState::new();
         }
@@ -71,12 +70,14 @@ fn render_game() {
                         (20.0 + (y as f32 * size)) as i32,
                         size as i32,
                         size as i32,
-                        read_game_state()
-                            .colors
+                        // go over all pieces untill you find the one that matches the value
+                        game_state
+                            .all_pieces
                             .iter()
-                            .find(|(id, _)| id == &val)
+                            .find(|&p| p.0 == val)
                             .unwrap()
-                            .1,
+                            .1
+                            .color,
                     );
                 }
             }
@@ -127,8 +128,8 @@ fn render_game() {
         );
 
         // on the left side render the held piece
-        if !game_state.held_piece.is_empty() {
-            for (y, row) in game_state.held_piece.iter().enumerate() {
+        if !game_state.held_piece.layout.is_empty() {
+            for (y, row) in game_state.held_piece.layout.iter().enumerate() {
                 for (x, &val) in row.iter().enumerate() {
                     if val != 0 {
                         d.draw_rectangle(
@@ -136,12 +137,7 @@ fn render_game() {
                             (256.0 + (y as f32 * size)) as i32,
                             size as i32,
                             size as i32,
-                            game_state
-                                .colors
-                                .iter()
-                                .find(|(id, _)| *id == game_state.held_id)
-                                .unwrap()
-                                .1,
+                            game_state.held_piece.color,
                         );
                     }
                 }

@@ -17,7 +17,7 @@ static USED_KEYS: [KeyboardKey; 6] = [
     KeyboardKey::KEY_DOWN,
     KeyboardKey::KEY_SPACE,
     KeyboardKey::KEY_UP,
-    KeyboardKey::KEY_LEFT_SHIFT
+    KeyboardKey::KEY_LEFT_SHIFT,
 ];
 
 pub fn on_update() {

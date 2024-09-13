@@ -15,7 +15,7 @@ enum Action {
     MoveDown,
     Drop,
     Rotate,
-    Hold
+    Hold,
 }
 
 impl Debug for Action {
@@ -63,7 +63,7 @@ pub fn on_tick() {
 }
 
 fn should_respawn(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
-    if game_state.ground_ticks > 12 {
+    if game_state.ground_ticks > 48 {
         game_state.ground_ticks = 0;
         game_state.controlling = 0;
     }
@@ -81,74 +81,26 @@ fn check_spawn(
             vec![0, 0, 0, 0, 0],
             vec![0, 0, 0, 0, 0],
         ];
-        let shape_r = vec![
-            vec![0, 0, 0, 0, 0],
-            vec![0, 1, 1, 1, 0],
-            vec![0, 1, 1, 1, 0],
-            vec![0, 1, 1, 1, 0],
-            vec![0, 0, 0, 0, 0],
-        ];
 
-        let shape_i = vec![
-            vec![0, 0, 1, 0, 0],
-            vec![0, 0, 1, 0, 0],
-            vec![0, 0, 1, 0, 0],
-            vec![0, 0, 1, 0, 0],
-            vec![0, 0, 1, 0, 0],
-        ];
-
-        let shape_t = vec![
-            vec![0, 0, 1, 0, 0],
-            vec![0, 0, 1, 0, 0],
-            vec![0, 1, 1, 1, 0],
-            vec![0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0],
-        ];
-
-
-        let shape_l = vec![
-            vec![0, 0, 1, 0, 0],
-            vec![0, 0, 1, 0, 0],
-            vec![0, 0, 1, 0, 0],
-            vec![0, 0, 1, 1, 0],
-            vec![0, 0, 0, 0, 0],
-        ];
-
-        let shape_j =  vec![
-            vec![0, 0, 1, 0, 0],
-            vec![0, 0, 1, 0, 0],
-            vec![0, 0, 1, 0, 0],
-            vec![0, 1, 1, 0, 0],
-            vec![0, 0, 0, 0, 0],
-        ];
-
-
-
-        let shapes = vec![shape_r, shape_i, shape_t, shape_l, shape_j];
+        let shapes = game_manager.pieces.clone();
         let rng = &mut game_manager.rng;
 
         let shape = &shapes[rng.gen_range(0..shapes.len())];
-
 
         game_state.current_piece = shape.clone();
 
         let random = rng.gen::<i32>();
 
-        for (y, row) in shape.iter().enumerate() {
+        for (y, row) in shape.layout.iter().enumerate() {
             for (x, &val) in row.iter().enumerate() {
-                game_state.arena[y ][x + 8] = if val == 1 { random } else { 0 };
+                game_state.arena[y][x + 8] = if val == 1 { random } else { 0 };
             }
         }
 
         game_state.current_center = (10, 2);
-
-
         game_state.controlling = random;
-        let color = (
-            random,
-            raylib::color::Color::new(rng.gen::<u8>(), rng.gen::<u8>(), rng.gen::<u8>(), 255),
-        );
-        game_state.colors.push(color);
+        game_state.all_pieces.push((random, shape.clone()));
+        game_state.has_held = false;
     }
 }
 
@@ -160,12 +112,12 @@ fn check_move(
 
     for action in actions {
         match action {
+            Action::Rotate => rotate(game_state),
             Action::MoveRight => move_right(game_state),
             Action::MoveLeft => move_left(game_state),
             Action::MoveDown => _ = move_down(game_state, true),
             Action::Drop => drop(game_state),
-            Action::Rotate => rotate(game_state),
-            Action::Hold => hold(game_state),
+            Action::Hold => hold(game_state, game_manager),
         }
     }
 
@@ -238,7 +190,6 @@ fn move_right(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameS
         // move the center of the piece to the right
         game_state.current_center.0 += 1;
     }
-
 }
 
 fn move_left(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
@@ -296,7 +247,10 @@ fn move_down(
     for y in (0..game_state.arena.len()).rev() {
         for x in 0..game_state.arena[y].len() {
             if game_state.arena[y][x] == game_state.controlling {
-                if y + 1 >= game_state.arena.len() || game_state.arena[y + 1][x] != 0 && game_state.arena[y + 1][x] != game_state.controlling {
+                if y + 1 >= game_state.arena.len()
+                    || game_state.arena[y + 1][x] != 0
+                        && game_state.arena[y + 1][x] != game_state.controlling
+                {
                     can_move_down = false;
                     break;
                 }
@@ -331,7 +285,6 @@ fn move_down(
     }
 }
 
-
 fn drop(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
     while move_down(game_state, true) {}
 
@@ -339,7 +292,6 @@ fn drop(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>)
     game_state.controlling = 0;
     game_state.drop_ticks = 0.0;
 }
-
 
 fn check_game_over(
     game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager>,
@@ -465,14 +417,24 @@ fn get_action(key: &KeyboardKey) -> Option<Action> {
     }
 }
 
-fn rotate(
-    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
-) {
+fn rotate(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
     // Remove the current piece from the arena
     let (center_x, center_y) = game_state.current_center;
     let controlling_id = game_state.controlling;
-    let mut matrix = game_state.current_piece.clone();
+    let mut matrix = game_state.current_piece.layout.clone();
 
+    let block = match game_state
+        .all_pieces
+        .iter()
+        .find(|&p| p.0 == controlling_id)
+    {
+        Some(piece) => &piece.1,
+        None => return,
+    };
+
+    if !block.can_rotate {
+        return;
+    }
 
     let mut new_matrix = vec![vec![0; matrix.len()]; matrix[0].len()];
     for i in 0..matrix.len() {
@@ -480,7 +442,7 @@ fn rotate(
             new_matrix[j][matrix.len() - 1 - i] = matrix[i][j];
         }
     }
-    
+
     matrix = new_matrix;
 
     for i in 0..matrix.len() {
@@ -492,10 +454,15 @@ fn rotate(
                 let pos_x = center_x as i32 + x;
                 let pos_y = center_y as i32 + y;
 
-                if pos_x < 0 || pos_x >= game_state.arena[0].len() as i32 || pos_y < 0 || pos_y >= game_state.arena.len() as i32 || (game_state.arena[pos_y as usize][pos_x as usize] != 0 && game_state.arena[pos_y as usize][pos_x as usize] != controlling_id) {
+                if pos_x < 0
+                    || pos_x >= game_state.arena[0].len() as i32
+                    || pos_y < 0
+                    || pos_y >= game_state.arena.len() as i32
+                    || (game_state.arena[pos_y as usize][pos_x as usize] != 0
+                        && game_state.arena[pos_y as usize][pos_x as usize] != controlling_id)
+                {
                     return;
                 }
-
             }
         }
     }
@@ -526,56 +493,49 @@ fn rotate(
     }
 
     // Update the current piece and center
-    game_state.current_piece = matrix;
-
+    game_state.current_piece.layout = matrix;
 }
 
-fn hold(
-    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>
-)
-{
+fn hold(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>, game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager>) {
+    if !game_state.has_held {
+        game_state.has_held = true;
+    } else {
+        return;
+    }
     let held_piece = game_state.held_piece.clone();
     let current_piece = game_state.current_piece.clone();
-    
-    // check if something is held
-    if held_piece.len() == 0 {
 
-        // remove the current piece from the arena
-        for y in 0..game_state.arena.len() {
-            for x in 0..game_state.arena[y].len() {
-                if game_state.arena[y][x] == game_state.controlling {
-                    game_state.arena[y][x] = 0;
-                }
+    for y in 0..game_state.arena.len() {
+        for x in 0..game_state.arena[y].len() {
+            if game_state.arena[y][x] == game_state.controlling {
+                game_state.arena[y][x] = 0;
             }
         }
-
-        game_state.held_piece = current_piece;
-        game_state.held_id = game_state.controlling;
-        game_state.controlling = 0;
-    } else {
-        // remove the current piece from the arena
-        for y in 0..game_state.arena.len() {
-            for x in 0..game_state.arena[y].len() {
-                if game_state.arena[y][x] == game_state.controlling {
-                    game_state.arena[y][x] = 0;
-                }
-            }
-        }
-
-        // spawn the held piece
-        for (y, row) in held_piece.iter().enumerate() {
-            for (x, &val) in row.iter().enumerate() {
-                game_state.arena[y][x + 8] = if val == 1 { game_state.controlling } else { 0 };
-            }
-        }
-
-        game_state.held_piece = current_piece;
-        game_state.current_piece = held_piece;
-        game_state.held_id = game_state.controlling;
-        game_state.controlling = game_state.held_id;
-        game_state.current_center = (10, 2);
-
     }
 
+    // check if something is held
+    if held_piece.layout.len() == 0 {
+        game_state.held_piece = current_piece;
+        game_state.controlling = 0;
+    } else {
 
+        // create a new controlling id for the held piece
+        let random = game_manager.rng.gen::<i32>();
+
+
+        // spawn the held piece
+        for (y, row) in held_piece.layout.iter().enumerate() {
+            for (x, &val) in row.iter().enumerate() {
+                game_state.arena[y][x + 8] = if val == 1 { random } else { 0 };
+            }
+        }
+
+        game_state.controlling = random;
+
+        game_state.all_pieces.push((random, held_piece.clone()));
+        game_state.current_piece = held_piece.clone();
+        game_state.held_piece = current_piece;
+
+        game_state.current_center = (10, 2);
+    }
 }
