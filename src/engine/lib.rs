@@ -35,7 +35,7 @@ pub fn start() {
     {
         let mut state = RAYLIB_STATE.lock().unwrap();
         if let Some(ref mut raylib_state) = *state {
-            raylib_state.rl.set_target_fps(60);
+            // raylib_state.rl.set_target_fps(60);
             raylib_state.rl.set_exit_key(None);
         }
     }

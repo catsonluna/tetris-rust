@@ -9,7 +9,7 @@ pub struct GameStatics {
 impl GameStatics {
     pub fn new() -> Self {
         Self {
-            tick_rate: 30,
+            tick_rate: 60,
             block_size: 16,
         }
     }

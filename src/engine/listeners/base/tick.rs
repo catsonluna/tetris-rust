@@ -123,9 +123,9 @@ fn check_move(
 
     if game_state.right_hold.is_pressed {
         game_state.right_hold.move_ticks += 1;
-        if game_state.right_hold.move_ticks > 5 {
+        if game_state.right_hold.move_ticks > 10 {
             move_right(game_state);
-            game_state.right_hold.move_ticks = 4;
+            game_state.right_hold.move_ticks = 9;
         }
     } else {
         game_state.right_hold.move_ticks = 0;
@@ -133,9 +133,9 @@ fn check_move(
 
     if game_state.left_hold.is_pressed {
         game_state.left_hold.move_ticks += 1;
-        if game_state.left_hold.move_ticks > 5 {
+        if game_state.left_hold.move_ticks > 10 {
             move_left(game_state);
-            game_state.left_hold.move_ticks = 4;
+            game_state.left_hold.move_ticks = 9;
         }
     } else {
         game_state.left_hold.move_ticks = 0;
@@ -143,9 +143,9 @@ fn check_move(
 
     if game_state.down_hold.is_pressed {
         game_state.down_hold.move_ticks += 1;
-        if game_state.down_hold.move_ticks > 5 {
+        if game_state.down_hold.move_ticks > 10 {
             move_down(game_state, true);
-            game_state.down_hold.move_ticks = 4;
+            game_state.down_hold.move_ticks = 9;
         }
     } else {
         game_state.down_hold.move_ticks = 0;
@@ -273,14 +273,12 @@ fn move_down(
                 }
             }
         }
-        game_state.drop_ticks = 6.0;
+        game_state.drop_ticks = 12.0;
         game_state.current_center.1 += 1;
         return true;
     } else {
         // If it can't move down, update the ground ticks
         game_state.ground_ticks += 1;
-        game_state.controlling = 0;
-        game_state.drop_ticks = 0.0;
         return false;
     }
 }
@@ -343,9 +341,9 @@ fn destoy_lines(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::Gam
         if game_state.lines_till_next_level <= 0 {
             game_state.level += 1;
             if game_state.level < 13 {
-                game_state.drop_speed = 1.0 + (game_state.level as f32 * 0.87);
+                game_state.drop_speed = 1.0 + (game_state.level as f32 * 0.75) / 2f32;
             }
-            game_state.lines_till_next_level = 10 + (game_state.level as f32 * 1.2) as i32;
+            game_state.lines_till_next_level = 5 + (game_state.level as f32 * 1.2) as i32;
         }
     }
 }
