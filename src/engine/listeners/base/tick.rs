@@ -16,6 +16,7 @@ enum Action {
     Drop,
     Rotate,
     Hold,
+    Pause
 }
 
 impl Debug for Action {
@@ -27,11 +28,13 @@ impl Debug for Action {
             Action::Drop => write!(f, "Drop"),
             Action::Rotate => write!(f, "Rotate"),
             Action::Hold => write!(f, "Hold"),
+            Action::Pause => write!(f, "Pause"),
         }
     }
 }
 
 pub fn on_tick() {
+    // println!("Tick");
     let game_state = &mut write_game_state();
     let game_manager = &mut write_game_manager();
 
@@ -42,14 +45,20 @@ pub fn on_tick() {
     if !game_manager.running {
         return;
     }
+    if game_state.game_over {
+        return;
+    }
     clear_ghost(game_state);
     should_respawn(game_state);
-    check_game_over(game_manager, game_state);
+    check_game_over(game_state);
     if !game_manager.in_game {
         return;
     }
 
     if !game_manager.running {
+        return;
+    }
+    if game_state.game_over {
         return;
     }
     check_spawn(game_manager, game_state);
@@ -118,6 +127,9 @@ fn check_move(
             Action::MoveDown => _ = move_down(game_state, true),
             Action::Drop => drop(game_state),
             Action::Hold => hold(game_state, game_manager),
+            Action::Pause => {
+                game_manager.running = !game_manager.running;
+            }
         }
     }
 
@@ -292,14 +304,12 @@ fn drop(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>)
 }
 
 fn check_game_over(
-    game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager>,
     game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
 ) {
     for y in 0..5 {
         for x in 0..game_state.arena[y].len() {
             if game_state.arena[y][x] != 0 && game_state.arena[y][x] != game_state.controlling {
-                game_manager.in_game = false;
-                game_manager.running = false;
+                game_state.game_over = true;
                 break;
             }
         }
@@ -396,6 +406,11 @@ fn process_input_buffer(
                         actions.push(&Action::Hold);
                     }
                 }
+                Action::Pause => {
+                    if key_action == &KeyboardAction::Pressed {
+                        actions.push(&Action::Pause);
+                    }
+                }
             }
         }
     }
@@ -411,6 +426,7 @@ fn get_action(key: &KeyboardKey) -> Option<Action> {
         KeyboardKey::KEY_SPACE => Some(Action::Drop),
         KeyboardKey::KEY_UP => Some(Action::Rotate),
         KeyboardKey::KEY_LEFT_SHIFT => Some(Action::Hold),
+        KeyboardKey::KEY_ESCAPE => Some(Action::Pause),
         _ => None,
     }
 }

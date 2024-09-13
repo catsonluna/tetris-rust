@@ -11,13 +11,14 @@ use crate::engine::{
     },
 };
 
-static USED_KEYS: [KeyboardKey; 6] = [
+static USED_KEYS: [KeyboardKey; 7] = [
     KeyboardKey::KEY_RIGHT,
     KeyboardKey::KEY_LEFT,
     KeyboardKey::KEY_DOWN,
     KeyboardKey::KEY_SPACE,
     KeyboardKey::KEY_UP,
     KeyboardKey::KEY_LEFT_SHIFT,
+    KeyboardKey::KEY_ESCAPE
 ];
 
 pub fn on_update() {

@@ -1,7 +1,7 @@
 use crate::engine::{
     lib::RAYLIB_STATE,
     managers::{
-        game_manager::{read_game_manager, write_game_manager},
+        game_manager::{self, read_game_manager, write_game_manager},
         game_state::{read_game_state, write_game_state, GameState},
     },
 };
@@ -152,5 +152,102 @@ fn render_game() {
                 }
             }
         }
+
+        if game_state.game_over {
+            drop(game_state);
+            render_game_over(&mut d);
+            return;
+        }
+
+        if !read_game_manager().running {
+            render_pause_menu(
+                &mut d,
+            );
+        }
+    }
+}
+
+fn render_game_over(
+    d: &mut RaylibDrawHandle,
+) {
+    // render a box with text with game over, score, level
+    // and a button to go back to the main menu
+    d.draw_rectangle(400, 256, 160, 160, Color::WHITE);
+    d.draw_rectangle_lines(400, 256, 160, 160, Color::BLACK);
+
+    d.draw_text("Game Over", 410, 266, 20, Color::BLACK);
+    d.draw_text(
+        format!("Score: {}", read_game_state().score).as_str(),
+        410,
+        286,
+        20,
+        Color::BLACK,
+    );
+
+    d.draw_text(
+        format!("Level: {}", read_game_state().level).as_str(),
+        410,
+        306,
+        20,
+        Color::BLACK,
+    );
+
+    if d.gui_button(rrect(
+        410,
+        326,
+        140,
+        30,
+    ), Some(rstr!("Main Menu"))) {
+        let game_manager = &mut write_game_manager();
+        game_manager.in_game = false;
+        game_manager.running = false;
+    }
+
+    if d.gui_button(
+        rrect(410, 366, 140, 30),
+        Some(rstr!("Restart")),
+    ) {
+            let game_manager = &mut write_game_manager();
+            game_manager.in_game = true;
+            game_manager.running = true;
+            game_manager.input_buffer.clear();
+
+            let mut game_state = write_game_state();
+            *game_state = GameState::new();
+    }
+
+}
+
+fn render_pause_menu(
+    // render a box with text with game paused
+    // and a button to resume the game
+    d: &mut RaylibDrawHandle,
+) {
+    d.draw_rectangle(400, 256, 160, 160, Color::WHITE);
+    d.draw_rectangle_lines(400, 256, 160, 160, Color::BLACK);
+
+    d.draw_text("Game Paused", 410, 266, 20, Color::BLACK);
+
+    if d.gui_button(
+        rrect(410, 300, 140, 30),
+        Some(rstr!("Resume")),
+    ) {
+        write_game_manager().running = true;
+    }
+
+    if d.gui_button(
+        rrect(410, 340, 140, 30),
+        Some(rstr!("Main Menu")),
+    ) {
+        let game_manager = &mut write_game_manager();
+        game_manager.in_game = false;
+        game_manager.running = false;
+    }
+
+    if d.gui_button(
+        rrect(410, 380, 140, 30),
+        Some(rstr!("Quit")),
+    ) {
+        write_game_manager().should_quit = true;
     }
 }
