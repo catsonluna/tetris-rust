@@ -153,6 +153,23 @@ fn render_game() {
             }
         }
 
+        for (i, piece) in game_state.piece_queue.iter().enumerate() {
+            for (y, row) in piece.layout.iter().enumerate() {
+                for (x, &val) in row.iter().enumerate() {
+                    if val != 0 && i < 5 {
+                        // draw them on the right side
+                        d.draw_rectangle(
+                            (1200.0 + (x as f32 * size)) as i32,
+                            (256.0 + (y as f32 * size) + (i as f32 * size * 5.0)) as i32,
+                            size as i32,
+                            size as i32,
+                            piece.color,
+                        );
+                    }
+                }
+            }
+        }
+
         if game_state.game_over {
             drop(game_state);
             render_game_over(&mut d);

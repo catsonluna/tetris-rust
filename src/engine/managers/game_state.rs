@@ -27,6 +27,8 @@ pub struct GameState {
     pub left_hold: ActionManager,
     pub right_hold: ActionManager,
     pub down_hold: ActionManager,
+
+    pub piece_queue: Vec<Block>,
 }
 
 pub struct ActionManager {
@@ -77,6 +79,7 @@ impl GameState {
             },
             has_held: false,
             all_pieces: vec![],
+            piece_queue: vec![],
         }
     }
 }

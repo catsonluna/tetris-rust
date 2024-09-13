@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use rand::Rng;
+use rand::{seq::SliceRandom, Rng};
 
 use crate::engine::managers::{
     game_manager::{self, write_game_manager, KeyboardAction},
@@ -83,18 +83,25 @@ fn check_spawn(
     game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
 ) {
     if game_state.controlling == 0 {
-        let _shape_none = vec![
-            vec![0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0],
-        ];
+        let mut rng = game_manager.rng.clone();
 
-        let shapes = game_manager.pieces.clone();
-        let rng = &mut game_manager.rng;
+        // check if piece queue is less than 6
+        if game_state.piece_queue.len() < 8 {
+            let shapes = game_manager.pieces.clone();
+            let mut temp_shpaes = shapes.clone();
+            let mut cloned_temp_shpaes = temp_shpaes.clone();
+            temp_shpaes.append(&mut cloned_temp_shpaes);
 
-        let shape = &shapes[rng.gen_range(0..shapes.len())];
+            temp_shpaes.shuffle(&mut rng);
+
+            // append the shuffled shapes to the piece queue
+            game_state.piece_queue.append(&mut temp_shpaes);
+            
+        }
+
+        // get the first piece in the queue
+        let shape = game_state.piece_queue.remove(0);
+
 
         game_state.current_piece = shape.clone();
 
