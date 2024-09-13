@@ -42,7 +42,6 @@ pub fn on_tick() {
     if !game_manager.running {
         return;
     }
-
     should_respawn(game_state);
     check_game_over(game_manager, game_state);
     if !game_manager.in_game {

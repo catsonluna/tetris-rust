@@ -91,18 +91,6 @@ impl GameManager {
                 },
                 Block {
                     layout: vec![
-                        vec![1, 1, 1, 1, 1],
-                        vec![1, 1, 1, 1, 1],
-                        vec![1, 1, 1, 1, 1],
-                        vec![1, 1, 1, 1, 1],
-                        vec![1, 1, 1, 1, 1],
-                    ],
-                    can_rotate: false,
-                    color: Color::DARKRED,
-                    name: "Large Block".to_string(),
-                },
-                Block {
-                    layout: vec![
                         vec![0, 0, 0, 0, 0],
                         vec![0, 0, 1, 0, 0],
                         vec![0, 1, 1, 1, 0],
@@ -145,6 +133,18 @@ impl GameManager {
                         vec![0, 0, 1, 0, 0],
                         vec![0, 1, 1, 0, 0],
                         vec![0, 0, 0, 0, 0],
+                    ],
+                    can_rotate: true,
+                    color: Color::DARKGREEN,
+                },
+                Block {
+                    name: "I".to_string(),
+                    layout: vec![
+                        vec![0, 0, 1, 0, 0],
+                        vec![0, 0, 1, 0, 0],
+                        vec![0, 0, 1, 0, 0],
+                        vec![0, 0, 1, 0, 0],
+                        vec![0, 0, 1, 0, 0],
                     ],
                     can_rotate: true,
                     color: Color::DARKGREEN,
