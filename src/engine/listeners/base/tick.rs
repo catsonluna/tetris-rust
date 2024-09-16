@@ -16,7 +16,7 @@ enum Action {
     Drop,
     Rotate,
     Hold,
-    Pause
+    Pause,
 }
 
 impl Debug for Action {
@@ -96,12 +96,10 @@ fn check_spawn(
 
             // append the shuffled shapes to the piece queue
             game_state.piece_queue.append(&mut temp_shpaes);
-            
         }
 
         // get the first piece in the queue
         let shape = game_state.piece_queue.remove(0);
-
 
         game_state.current_piece = shape.clone();
 
@@ -310,9 +308,7 @@ fn drop(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>)
     game_state.drop_ticks = 0.0;
 }
 
-fn check_game_over(
-    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
-) {
+fn check_game_over(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
     for y in 0..5 {
         for x in 0..game_state.arena[y].len() {
             if game_state.arena[y][x] != 0 && game_state.arena[y][x] != game_state.controlling {
@@ -573,8 +569,6 @@ fn clear_ghost(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::Game
 }
 
 fn draw_ghost(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
-
-
     // place -1 where the piece would land if it was dropped, without actually moving it
     let controlling = game_state.controlling.clone();
     let arena_backup = game_state.arena.clone();
@@ -597,11 +591,8 @@ fn draw_ghost(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameS
         }
     }
 
-
     game_state.controlling = controlling;
-
 }
-
 
 fn move_down_ghost(
     game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,

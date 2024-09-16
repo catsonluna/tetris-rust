@@ -25,6 +25,7 @@ pub fn start() {
         .size(1600, 900)
         .resizable()
         .title("Tetris")
+        // .vsync()
         .build();
 
     {
@@ -35,7 +36,7 @@ pub fn start() {
     {
         let mut state = RAYLIB_STATE.lock().unwrap();
         if let Some(ref mut raylib_state) = *state {
-            raylib_state.rl.set_target_fps(60);
+            raylib_state.rl.set_target_fps(120);
             raylib_state.rl.set_exit_key(None);
         }
     }

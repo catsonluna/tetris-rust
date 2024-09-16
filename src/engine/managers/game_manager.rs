@@ -46,7 +46,7 @@ pub struct GameManager {
 
     pub in_game: bool,
     pub running: bool,
-    
+
     pub should_quit: bool,
 
     pub input_buffer: Vec<(KeyboardKey, KeyboardAction)>,
