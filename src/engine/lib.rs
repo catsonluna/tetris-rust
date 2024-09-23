@@ -1,9 +1,8 @@
-use crate::engine::utils;
 
 use super::{
     events::events::UPDATE_EVENT,
     listeners::lib::register_events,
-    managers::game_manager::{read_game_manager, write_game_manager}, utils::{crypto, storage},
+    managers::game_manager::{read_game_manager, write_game_manager},
 };
 use lazy_static::lazy_static;
 use std::sync::{Arc, Mutex};
@@ -23,10 +22,6 @@ lazy_static! {
 
 pub fn start() {
     register_events();
-
-
-    let dec = storage::lib::load_and_decrypt("test.txt");
-    println!("Decrypted: {}", dec);
     
 
 
@@ -34,7 +29,6 @@ pub fn start() {
         .size(1600, 900)
         .resizable()
         .title("Tetris")
-        // .vsync()
         .build();
 
     {

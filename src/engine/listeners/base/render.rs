@@ -40,28 +40,15 @@ fn render_main_menu() {
         let mut d = raylib_state.rl.begin_drawing(&raylib_state.thread);
         let (scale_x, scale_y) = get_scaling_factors(&d);
 
-        let title_x = scaled_value(800, scale_x) - scaled_value(100, scale_x);
-        let title_y = scaled_value(116, scale_y);
-        let title_size = scaled_value(100, scale_y);
-
         ui::text::text(
             &mut d,
-            scaled_value(200, scale_x),
-            scaled_value(200, scale_y),
-            title_x,
-            title_y,
+            scaled_value(800, scale_x),
+            scaled_value(116, scale_y),
             Color::BLACK,
             "Tetris".to_string(),
-            title_size,
+            scaled_value(100, scale_y),
         );
 
-        d.gui_set_style(
-            GuiControl::BUTTON,
-            raylib::consts::GuiControlProperty::TEXT_ALIGNMENT as i32,
-            raylib::consts::GuiTextAlignment::TEXT_ALIGN_CENTER as i32,
-        );
-
-        // Scale button positions and sizes
         if ui::button::button(
             &mut d,
             scaled_value(115, scale_x),
@@ -99,7 +86,7 @@ fn render_main_menu() {
             scaled_value(20, scale_y),
             Color::BLACK,
             Color::BLACK,
-            false,
+            true,
         ) {}
 
         // disabled settings button
@@ -148,34 +135,57 @@ fn render_game() {
         let (scale_x, scale_y) = get_scaling_factors(&d);
         let game_state = read_game_state();
 
-        // Drawing dynamic arena grid
-        let size = 16.0 * scale_y; // Scale grid size
-
         d.draw_fps(scaled_value(10, scale_x), scaled_value(10, scale_y));
 
         // Draw other UI elements like score, level, and speed using scaled positions
-        d.draw_text(
-            format!("Score: {}", game_state.score).as_str(),
-            scaled_value(624, scale_x),
-            scaled_value(12, scale_y),
-            scaled_value(20, scale_y),
-            Color::BLACK,
+        ui::text::text(&mut d, 
+        // to the left of held piece
+        scaled_value(300, scale_x),
+        scaled_value(220, scale_y),
+        Color::BLACK,
+        "Score".to_string(),
+        scaled_value(20, scale_y),
         );
 
-        d.draw_text(
-            format!("Level: {}", game_state.level).as_str(),
-            scaled_value(624, scale_x),
-            scaled_value(36, scale_y),
-            scaled_value(20, scale_y),
-            Color::BLACK,
+        ui::text::text(&mut d,
+        scaled_value(300, scale_x),
+        scaled_value(240, scale_y),
+        Color::BLACK,
+        game_state.score.to_string(),
+        scaled_value(20, scale_y),
+        );
+        // high score bellow
+        ui::text::text(&mut d, 
+        scaled_value(300, scale_x),
+        scaled_value(270, scale_y),
+        Color::BLACK,
+        "High Score".to_string(),
+        scaled_value(20, scale_y),
         );
 
-        d.draw_text(
-            format!("Speed: {}", game_state.drop_speed).as_str(),
-            scaled_value(624, scale_x),
-            scaled_value(60, scale_y),
-            scaled_value(20, scale_y),
-            Color::BLACK,
+        ui::text::text(&mut d,
+        scaled_value(300, scale_x),
+        scaled_value(290, scale_y),
+        Color::BLACK,
+        "0".to_string(),
+        scaled_value(20, scale_y),
+        );
+
+        // level bellow
+        ui::text::text(&mut d,
+        scaled_value(300, scale_x),
+        scaled_value(320, scale_y),
+        Color::BLACK,
+        "Level".to_string(),
+        scaled_value(20, scale_y),
+        );
+
+        ui::text::text(&mut d,
+        scaled_value(300, scale_x),
+        scaled_value(340, scale_y),
+        Color::BLACK,
+        game_state.level.to_string(),
+        scaled_value(20, scale_y),
         );
 
         let board_x = scaled_value(624, scale_x); // Top-left X position of the game board
@@ -222,25 +232,24 @@ fn render_game() {
                     );
                 }
             }
-        }
+        }            
+        let held_x = scaled_value(500, scale_x);
+        let held_y = scaled_value(220, scale_y);
 
-        // on the left side render the held piece nexxt to the board
-        let held_x = scaled_value(480, scale_x);
-        let held_y = scaled_value(200, scale_y);
-        let held_size = scaled_value(16, scale_y);
+        let held_size = scaled_value(16, scale_x);
 
-        d.draw_text(
-            "Held Piece",
-            held_x,
-            held_y - scaled_value(20, scale_y),
-            scaled_value(20, scale_y),
-            Color::BLACK,
+        ui::text::text(&mut d,
+        held_x,
+        held_y,
+        Color::BLACK,
+        "Held Piece".to_string(),
+        scaled_value(20, scale_y),
         );
 
         for (y, row) in game_state.held_piece.layout.iter().enumerate() {
             for (x, &val) in row.iter().enumerate() {
-                let cell_x = held_x + (x as i32 * held_size); // Calculate the cell's X position
-                let cell_y = held_y + (y as i32 * held_size); // Calculate the cell's Y position
+                let cell_x = held_x - 40 + (x as i32 * held_size); // Calculate the cell's X position
+                let cell_y = held_y + 25 + (y as i32 * held_size); // Calculate the cell's Y position
 
                 if val != 0 {
                     d.draw_rectangle(
@@ -255,21 +264,21 @@ fn render_game() {
         }
 
         // on the right side render the next 5 pieces one on top of the other
-        let queue_x = scaled_value(1000, scale_x);
-        let queue_y = scaled_value(200, scale_y);
+        let queue_x = scaled_value(1100, scale_x);
+        let queue_y = scaled_value(250, scale_y);
         let queue_size = scaled_value(8, scale_y);
 
-        d.draw_text(
-            "Next Pieces",
+        ui::text::text(&mut d,
             queue_x,
-            queue_y - scaled_value(20, scale_y),
-            scaled_value(20, scale_y),
+            queue_y,
             Color::BLACK,
+        "Next Pieces".to_string(),
+        scaled_value(20, scale_y),
         );
 
         for (i, piece) in game_state.piece_queue.iter().enumerate() {
-            let piece_x = queue_x;
-            let piece_y = queue_y + (i as i32 * 5 * queue_size);
+            let piece_x = queue_x - scaled_value(25, scale_x);
+            let piece_y = queue_y + 25 + ((i as i32) * 5 * queue_size);
 
             if i > 5 {
                 break;
