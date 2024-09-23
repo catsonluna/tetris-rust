@@ -1,10 +1,13 @@
+use crate::engine::utils;
+
 use super::{
     events::events::UPDATE_EVENT,
     listeners::lib::register_events,
-    managers::game_manager::{read_game_manager, write_game_manager},
+    managers::game_manager::{read_game_manager, write_game_manager}, utils::{crypto, storage},
 };
 use lazy_static::lazy_static;
 use std::sync::{Arc, Mutex};
+
 
 pub struct RaylibState {
     pub rl: raylib::RaylibHandle,
@@ -20,6 +23,12 @@ lazy_static! {
 
 pub fn start() {
     register_events();
+
+
+    let dec = storage::lib::load_and_decrypt("test.txt");
+    println!("Decrypted: {}", dec);
+    
+
 
     let (rl, thread) = raylib::init()
         .size(1600, 900)

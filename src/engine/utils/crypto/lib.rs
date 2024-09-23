@@ -60,3 +60,7 @@ pub fn decrypt(data: &[u8]) -> Vec<u8> {
 
     dec_data
 }
+
+pub fn base64_to_bytes(data: &str) -> Vec<u8> {
+    base64::decode(data).expect("failed to decode base64")
+}
