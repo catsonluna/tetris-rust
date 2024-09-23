@@ -14,7 +14,6 @@ pub fn button(
     hover_font_color: Color,
     disabled: bool,
 ) -> bool {
-
     let button_x = x - width / 2;
     let button_y = y - height / 2;
 
@@ -36,8 +35,11 @@ pub fn button(
     let mouse_x = mouse.x as i32;
     let mouse_y = mouse.y as i32;
 
-
-    if mouse_x >= button_x && mouse_x <= button_x + width && mouse_y >= button_y && mouse_y <= button_y + height {
+    if mouse_x >= button_x
+        && mouse_x <= button_x + width
+        && mouse_y >= button_y
+        && mouse_y <= button_y + height
+    {
         d.draw_rectangle(button_x, button_y, width, height, hover_color);
         let text_width = d.measure_text(&text, font_size);
 

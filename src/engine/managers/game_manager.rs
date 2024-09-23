@@ -52,6 +52,8 @@ pub struct GameManager {
     pub input_buffer: Vec<(KeyboardKey, KeyboardAction)>,
 
     pub pieces: Vec<Block>,
+
+    pub app_start_time: Instant,
 }
 
 impl GameManager {
@@ -187,6 +189,7 @@ impl GameManager {
                     color: Color::PURPLE,
                 },
             ],
+            app_start_time: Instant::now(),
         }
     }
 }

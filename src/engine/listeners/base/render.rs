@@ -74,18 +74,19 @@ fn render_main_menu() {
             scaled_value(20, scale_y),
             Color::BLACK,
             Color::BLACK,
-            false
+            false,
         ) {
             let game_manager = &mut write_game_manager();
             game_manager.in_game = true;
             game_manager.running = true;
             game_manager.input_buffer.clear();
 
+            // play a looping song
+
             let mut game_state = write_game_state();
             *game_state = GameState::new();
         }
 
-        // disabled settings button
         if ui::button::button(
             &mut d,
             scaled_value(115, scale_x),
@@ -94,13 +95,14 @@ fn render_main_menu() {
             scaled_value(350, scale_y),
             Color::WHITE,
             Color::GRAY,
-            "Settings".to_string(),
+            "Blocks".to_string(),
             scaled_value(20, scale_y),
             Color::BLACK,
             Color::BLACK,
-            true
+            false,
         ) {}
 
+        // disabled settings button
         if ui::button::button(
             &mut d,
             scaled_value(115, scale_x),
@@ -109,11 +111,26 @@ fn render_main_menu() {
             scaled_value(400, scale_y),
             Color::WHITE,
             Color::GRAY,
+            "Settings".to_string(),
+            scaled_value(20, scale_y),
+            Color::BLACK,
+            Color::BLACK,
+            true,
+        ) {}
+
+        if ui::button::button(
+            &mut d,
+            scaled_value(115, scale_x),
+            scaled_value(30, scale_y),
+            scaled_value(800, scale_x),
+            scaled_value(450, scale_y),
+            Color::WHITE,
+            Color::GRAY,
             "Quit".to_string(),
             scaled_value(20, scale_y),
             Color::BLACK,
             Color::BLACK,
-            false
+            false,
         ) {
             write_game_manager().should_quit = true;
         }
