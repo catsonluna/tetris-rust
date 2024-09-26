@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use once_cell::sync::Lazy;
 use raylib::{color::Color, ffi::KeyboardKey};
 use std::{
@@ -5,6 +6,9 @@ use std::{
     sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
     time::{Duration, Instant},
 };
+
+use serde::{Deserialize, Serialize};
+
 #[derive(PartialEq)] // Add the PartialEq trait
 pub enum KeyboardAction {
     Pressed,
@@ -16,6 +20,58 @@ pub struct Block {
     pub can_rotate: bool,
     pub color: Color,
     pub name: String,
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SaveData {
+    pub check_sum: i32,
+    pub best_game: GameData,
+    pub history: Vec<GameData>,
+}
+
+impl SaveData {
+    pub fn new() -> Self {
+        Self {
+            check_sum: 0,
+            best_game: GameData::new(),
+            history: vec![],
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GameData {
+    pub score: i32,
+    pub level: i32,
+    pub lines_cleared: i32,
+    pub start_time: DateTime<Utc>,
+    pub end_time: DateTime<Utc>,
+}
+
+impl GameData {
+    pub fn new() -> Self {
+        Self {
+            score: 0,
+            level: 1,
+            lines_cleared: 0,
+            start_time: Utc::now(),
+            end_time: Utc::now(),
+        }
+    }
+    
+}
+
+impl Clone for GameData {
+    fn clone(&self) -> Self {
+        Self {
+            score: self.score,
+            level: self.level,
+            lines_cleared: self.lines_cleared,
+            start_time: self.start_time,
+            end_time: self.end_time,
+        }
+    }
 }
 
 impl Clone for Block {
@@ -54,6 +110,8 @@ pub struct GameManager {
     pub pieces: Vec<Block>,
 
     pub app_start_time: Instant,
+
+    pub save_data: SaveData,
 }
 
 impl GameManager {
@@ -190,6 +248,7 @@ impl GameManager {
                 },
             ],
             app_start_time: Instant::now(),
+            save_data: SaveData::new(),
         }
     }
 }

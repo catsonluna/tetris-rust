@@ -2,7 +2,7 @@ use once_cell::sync::Lazy;
 use raylib::color::Color;
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
-use super::game_manager::Block;
+use super::game_manager::{Block, GameData};
 
 pub struct GameState {
     pub controlling: i32,
@@ -15,9 +15,7 @@ pub struct GameState {
     pub has_held: bool,
 
     pub game_over: bool,
-
-    pub score: i32,
-    pub level: i32,
+    pub game_data: GameData,
     pub lines_till_next_level: i32,
 
     pub drop_speed: f32,
@@ -44,8 +42,9 @@ impl GameState {
             drop_speed: 1.0,
             drop_ticks: 0.0,
             ground_ticks: 0,
-            score: 0,
-            level: 1,
+
+            game_data: GameData::new(),
+
             lines_till_next_level: 6,
             game_over: false,
 

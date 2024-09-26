@@ -2,10 +2,10 @@ use std::fmt::Debug;
 
 use rand::{seq::SliceRandom, Rng};
 
-use crate::engine::managers::{
+use crate::engine::{managers::{
     game_manager::{self, write_game_manager, KeyboardAction},
     game_state::{self, write_game_state},
-};
+}, utils::storage};
 use raylib::prelude::*;
 
 #[derive(PartialEq)] // Add the PartialEq trait
@@ -50,7 +50,7 @@ pub fn on_tick() {
     }
     clear_ghost(game_state);
     should_respawn(game_state);
-    check_game_over(game_state);
+    check_game_over(game_state, game_manager);
     if !game_manager.in_game {
         return;
     }
@@ -308,11 +308,27 @@ fn drop(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>)
     game_state.drop_ticks = 0.0;
 }
 
-fn check_game_over(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
+fn check_game_over(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>, game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager>) {
     for y in 0..5 {
         for x in 0..game_state.arena[y].len() {
             if game_state.arena[y][x] != 0 && game_state.arena[y][x] != game_state.controlling {
                 game_state.game_over = true;
+
+                // set the end time
+                game_state.game_data.end_time = chrono::offset::Utc::now();
+
+                // add the game to history
+                game_manager.save_data.history.push(game_state.game_data.clone());
+
+                // if the score is higher, set this as the best game
+                if game_state.game_data.score > game_manager.save_data.best_game.score {
+                    game_manager.save_data.best_game = game_state.game_data.clone();
+                }
+
+                // save the game data
+                let serialized_save_data = ron::ser::to_string(&game_manager.save_data).unwrap();
+                storage::lib::save("save.rvrs", &serialized_save_data);
+
                 break;
             }
         }
@@ -343,21 +359,25 @@ fn destoy_lines(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::Gam
         }
     }
     if despawned > 0 {
-        let level = if game_state.level > 15 {
+        let level = if game_state.game_data.level > 15 {
             15
         } else {
-            game_state.level
+            game_state.game_data.level
         };
-        game_state.score += (despawned * 100 * level) as i32;
+        game_state.game_data.score += (despawned * 100 * level) as i32;
 
         game_state.lines_till_next_level -= despawned as i32;
         if game_state.lines_till_next_level <= 0 {
-            game_state.level += 1;
-            if game_state.level < 13 {
-                game_state.drop_speed = 1.0 + (game_state.level as f32 * 0.75) / 2f32;
+            game_state.game_data.level += 1;
+            if game_state.game_data.level < 13 {
+                game_state.drop_speed = 1.0 + (game_state.game_data.level as f32 * 0.75) / 2f32;
             }
-            game_state.lines_till_next_level = 5 + (game_state.level as f32 * 1.2) as i32;
+            game_state.lines_till_next_level = 5 + (game_state.game_data.level as f32 * 1.2) as i32;
         }
+        
+        game_state.game_data.lines_cleared += despawned as i32;
+
+        println!("Score: {:?}", game_state.game_data);
     }
 }
 

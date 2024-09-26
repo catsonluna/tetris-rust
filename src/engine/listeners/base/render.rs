@@ -2,6 +2,7 @@ use raylib::prelude::*;
 
 use crate::engine::common::ui;
 use crate::engine::lib::RAYLIB_STATE;
+use crate::engine::managers::game_manager;
 use crate::engine::managers::game_manager::read_game_manager;
 use crate::engine::managers::game_manager::write_game_manager;
 use crate::engine::managers::game_state::read_game_state;
@@ -138,54 +139,64 @@ fn render_game() {
         d.draw_fps(scaled_value(10, scale_x), scaled_value(10, scale_y));
 
         // Draw other UI elements like score, level, and speed using scaled positions
-        ui::text::text(&mut d, 
-        // to the left of held piece
-        scaled_value(300, scale_x),
-        scaled_value(220, scale_y),
-        Color::BLACK,
-        "Score".to_string(),
-        scaled_value(20, scale_y),
+        ui::text::text(
+            &mut d,
+            // to the left of held piece
+            scaled_value(300, scale_x),
+            scaled_value(220, scale_y),
+            Color::BLACK,
+            "Score".to_string(),
+            scaled_value(20, scale_y),
         );
 
-        ui::text::text(&mut d,
-        scaled_value(300, scale_x),
-        scaled_value(240, scale_y),
-        Color::BLACK,
-        game_state.score.to_string(),
-        scaled_value(20, scale_y),
+        ui::text::text(
+            &mut d,
+            scaled_value(300, scale_x),
+            scaled_value(240, scale_y),
+            Color::BLACK,
+            game_state.game_data.score.to_string(),
+            scaled_value(20, scale_y),
         );
         // high score bellow
-        ui::text::text(&mut d, 
-        scaled_value(300, scale_x),
-        scaled_value(270, scale_y),
-        Color::BLACK,
-        "High Score".to_string(),
-        scaled_value(20, scale_y),
+        ui::text::text(
+            &mut d,
+            scaled_value(300, scale_x),
+            scaled_value(270, scale_y),
+            Color::BLACK,
+            "High Score".to_string(),
+            scaled_value(20, scale_y),
         );
 
-        ui::text::text(&mut d,
-        scaled_value(300, scale_x),
-        scaled_value(290, scale_y),
-        Color::BLACK,
-        "0".to_string(),
-        scaled_value(20, scale_y),
+        ui::text::text(
+            &mut d,
+            scaled_value(300, scale_x),
+            scaled_value(290, scale_y),
+            Color::BLACK,
+            if game_manager::read_game_manager().save_data.best_game.score > game_state.game_data.score {
+                game_manager::read_game_manager().save_data.best_game.score.to_string()
+            } else {
+                game_state.game_data.score.to_string()
+            },
+            scaled_value(20, scale_y),
         );
 
         // level bellow
-        ui::text::text(&mut d,
-        scaled_value(300, scale_x),
-        scaled_value(320, scale_y),
-        Color::BLACK,
-        "Level".to_string(),
-        scaled_value(20, scale_y),
+        ui::text::text(
+            &mut d,
+            scaled_value(300, scale_x),
+            scaled_value(320, scale_y),
+            Color::BLACK,
+            "Level".to_string(),
+            scaled_value(20, scale_y),
         );
 
-        ui::text::text(&mut d,
-        scaled_value(300, scale_x),
-        scaled_value(340, scale_y),
-        Color::BLACK,
-        game_state.level.to_string(),
-        scaled_value(20, scale_y),
+        ui::text::text(
+            &mut d,
+            scaled_value(300, scale_x),
+            scaled_value(340, scale_y),
+            Color::BLACK,
+            game_state.game_data.level.to_string(),
+            scaled_value(20, scale_y),
         );
 
         let board_x = scaled_value(624, scale_x); // Top-left X position of the game board
@@ -232,18 +243,19 @@ fn render_game() {
                     );
                 }
             }
-        }            
+        }
         let held_x = scaled_value(500, scale_x);
         let held_y = scaled_value(220, scale_y);
 
         let held_size = scaled_value(16, scale_x);
 
-        ui::text::text(&mut d,
-        held_x,
-        held_y,
-        Color::BLACK,
-        "Held Piece".to_string(),
-        scaled_value(20, scale_y),
+        ui::text::text(
+            &mut d,
+            held_x,
+            held_y,
+            Color::BLACK,
+            "Held Piece".to_string(),
+            scaled_value(20, scale_y),
         );
 
         for (y, row) in game_state.held_piece.layout.iter().enumerate() {
@@ -268,12 +280,13 @@ fn render_game() {
         let queue_y = scaled_value(250, scale_y);
         let queue_size = scaled_value(8, scale_y);
 
-        ui::text::text(&mut d,
+        ui::text::text(
+            &mut d,
             queue_x,
             queue_y,
             Color::BLACK,
-        "Next Pieces".to_string(),
-        scaled_value(20, scale_y),
+            "Next Pieces".to_string(),
+            scaled_value(20, scale_y),
         );
 
         for (i, piece) in game_state.piece_queue.iter().enumerate() {

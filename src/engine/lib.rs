@@ -1,12 +1,11 @@
-
 use super::{
     events::events::UPDATE_EVENT,
     listeners::lib::register_events,
     managers::game_manager::{read_game_manager, write_game_manager},
+    utils::storage,
 };
 use lazy_static::lazy_static;
 use std::sync::{Arc, Mutex};
-
 
 pub struct RaylibState {
     pub rl: raylib::RaylibHandle,
@@ -22,13 +21,11 @@ lazy_static! {
 
 pub fn start() {
     register_events();
-    
-
 
     let (rl, thread) = raylib::init()
         .size(1600, 900)
         .resizable()
-        .title("Tetris")
+        .title("Revris")
         .build();
 
     {
@@ -43,6 +40,34 @@ pub fn start() {
             raylib_state.rl.set_exit_key(None);
         }
     }
+
+    // load save data from file
+    let save_data = storage::lib::load("save.rvrs");
+
+    // if empty, create new save data
+    if save_data.is_empty() {
+        // save it as the savedata struct
+        // SaveData creation
+        let save_data = crate::engine::managers::game_manager::SaveData::new();
+        let serialized_save_data = ron::ser::to_string(&save_data).unwrap();
+
+        // Debug the serialized form
+        println!("Serialized SaveData: {:?}", serialized_save_data);
+
+        // Save the serialized data
+        storage::lib::save("save.rvrs", &serialized_save_data);
+    } else {
+
+
+        // Then try to deserialize it
+        let save_data: crate::engine::managers::game_manager::SaveData =
+            ron::de::from_str(&save_data).unwrap();
+
+        write_game_manager().save_data = save_data;
+    }
+
+    // print out save data in pretty form
+    println!("{:#?}", read_game_manager().save_data);
 
     while !read_game_manager().should_quit {
         let should_close = {
