@@ -58,19 +58,16 @@ pub fn start() {
         storage::lib::save("save.rvrs", &serialized_save_data);
     } else {
 
-
-        // Then try to deserialize it
         let save_data: crate::engine::managers::game_manager::SaveData =
             ron::de::from_str(&save_data).unwrap();
 
         write_game_manager().save_data = save_data;
     }
 
-    // print out save data in pretty form
     println!("{:#?}", read_game_manager().save_data);
 
     while !read_game_manager().should_quit {
-        let should_close = {
+        write_game_manager().should_quit = {
             let state = RAYLIB_STATE.lock().unwrap();
             if let Some(ref raylib_state) = *state {
                 raylib_state.rl.window_should_close()
@@ -78,10 +75,6 @@ pub fn start() {
                 false
             }
         };
-
-        if should_close {
-            write_game_manager().should_quit = true;
-        }
 
         UPDATE_EVENT.call();
     }
