@@ -24,8 +24,8 @@ static USED_KEYS: [KeyboardKey; 7] = [
 pub fn on_update() {
     RENDER_EVENT.call();
     // println!("Update");
-    do_tick();
     updated_input_buffer();
+    do_tick();
 }
 
 pub fn do_tick() {

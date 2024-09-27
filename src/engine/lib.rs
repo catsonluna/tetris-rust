@@ -2,7 +2,7 @@ use super::{
     events::events::UPDATE_EVENT,
     listeners::lib::register_events,
     managers::game_manager::{read_game_manager, write_game_manager},
-    utils::storage,
+    common::storage,
 };
 use lazy_static::lazy_static;
 use std::sync::{Arc, Mutex};
