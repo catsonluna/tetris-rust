@@ -2,23 +2,15 @@ use raylib::prelude::*;
 
 use crate::engine::common::ui;
 use crate::engine::lib::RAYLIB_STATE;
-use crate::engine::managers::game_manager;
-use crate::engine::managers::game_manager::read_game_manager;
-use crate::engine::managers::game_manager::write_game_manager;
+use crate::engine::managers::game_manager::{self, read_game_manager};
 use crate::engine::managers::game_state::read_game_state;
-use crate::engine::managers::game_state::write_game_state;
-use crate::engine::managers::game_state::GameState;
 
 // Base resolution as reference
 const BASE_WIDTH: i32 = 1600;
 const BASE_HEIGHT: i32 = 900;
 
 pub fn on_render() {
-    if read_game_manager().in_game {
-        render_game();
-    } else {
-        render_main_menu();
-    }
+    render_main_menu();
 }
 
 fn get_scaling_factors(d: &RaylibDrawHandle) -> (f32, f32) {
@@ -50,7 +42,7 @@ fn render_main_menu() {
             scaled_value(100, scale_y),
         );
 
-        if ui::button::button(
+        ui::button::button(
             &mut d,
             scaled_value(115, scale_x),
             scaled_value(30, scale_y),
@@ -63,19 +55,20 @@ fn render_main_menu() {
             Color::BLACK,
             Color::BLACK,
             false,
-        ) {
-            let game_manager = &mut write_game_manager();
-            game_manager.in_game = true;
-            game_manager.running = true;
-            game_manager.input_buffer.clear();
+            "".to_string()
+        );
+            // let game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager> = &mut write_game_manager();
+            // game_manager.in_game = true;
+            // game_manager.running = true;
+            // game_manager.input_buffer.clear();
 
-            // play a looping song
+            // // play a looping song
 
-            let mut game_state = write_game_state();
-            *game_state = GameState::new();
-        }
+            // let mut game_state = write_game_state();
+            // *game_state = GameState::new();
 
-        if ui::button::button(
+
+        ui::button::button(
             &mut d,
             scaled_value(115, scale_x),
             scaled_value(30, scale_y),
@@ -88,10 +81,11 @@ fn render_main_menu() {
             Color::BLACK,
             Color::BLACK,
             true,
-        ) {}
+            "".to_string()
+        );
 
         // disabled settings button
-        if ui::button::button(
+        ui::button::button(
             &mut d,
             scaled_value(115, scale_x),
             scaled_value(30, scale_y),
@@ -104,9 +98,10 @@ fn render_main_menu() {
             Color::BLACK,
             Color::BLACK,
             true,
-        ) {}
+            "".to_string()
+        );
 
-        if ui::button::button(
+        ui::button::button(
             &mut d,
             scaled_value(115, scale_x),
             scaled_value(30, scale_y),
@@ -119,9 +114,9 @@ fn render_main_menu() {
             Color::BLACK,
             Color::BLACK,
             false,
-        ) {
-            write_game_manager().should_quit = true;
-        }
+            "".to_string()
+        );
+            // write_game_manager().should_quit = true;
 
         d.clear_background(Color::from_hex("cfcefc".as_ref()).unwrap());
     }
@@ -134,7 +129,6 @@ fn render_game() {
         d.clear_background(Color::from_hex("cfcefc".as_ref()).unwrap());
 
         let (scale_x, scale_y) = get_scaling_factors(&d);
-        let game_state = read_game_state();
 
         d.draw_fps(scaled_value(10, scale_x), scaled_value(10, scale_y));
 
@@ -154,7 +148,7 @@ fn render_game() {
             scaled_value(300, scale_x),
             scaled_value(240, scale_y),
             Color::BLACK,
-            game_state.game_data.score.to_string(),
+            read_game_state().game_data.score.to_string(),
             scaled_value(20, scale_y),
         );
         // high score bellow
@@ -166,16 +160,15 @@ fn render_game() {
             "High Score".to_string(),
             scaled_value(20, scale_y),
         );
-
         ui::text::text(
             &mut d,
             scaled_value(300, scale_x),
             scaled_value(290, scale_y),
             Color::BLACK,
-            if game_manager::read_game_manager().save_data.best_game.score > game_state.game_data.score {
-                game_manager::read_game_manager().save_data.best_game.score.to_string()
+            if read_game_manager().save_data.best_game.score > read_game_state().game_data.score {
+                read_game_manager().save_data.best_game.score.to_string()
             } else {
-                game_state.game_data.score.to_string()
+                read_game_state().game_data.score.to_string()
             },
             scaled_value(20, scale_y),
         );
@@ -195,7 +188,7 @@ fn render_game() {
             scaled_value(300, scale_x),
             scaled_value(340, scale_y),
             Color::BLACK,
-            game_state.game_data.level.to_string(),
+            read_game_state().game_data.level.to_string(),
             scaled_value(20, scale_y),
         );
 
@@ -203,7 +196,7 @@ fn render_game() {
         let board_y = scaled_value(56, scale_y); // Top-left Y position of the game board
         let cell_size = scaled_value(16, scale_x); // Size of each cell, scaled based on screen size
 
-        for (y, row) in game_state.arena.iter().enumerate() {
+        for (y, row) in read_game_state().arena.iter().enumerate() {
             for (x, &val) in row.iter().enumerate() {
                 let cell_x = board_x + (x as i32 * cell_size); // Calculate the cell's X position
                 let cell_y = board_y + (y as i32 * cell_size); // Calculate the cell's Y position
@@ -215,7 +208,7 @@ fn render_game() {
                         cell_size,
                         cell_size,
                         // Find the piece color
-                        game_state
+                        read_game_state()
                             .all_pieces
                             .iter()
                             .find(|&p| p.0 == val)
@@ -258,7 +251,7 @@ fn render_game() {
             scaled_value(20, scale_y),
         );
 
-        for (y, row) in game_state.held_piece.layout.iter().enumerate() {
+        for (y, row) in read_game_state().held_piece.layout.iter().enumerate() {
             for (x, &val) in row.iter().enumerate() {
                 let cell_x = held_x - 40 + (x as i32 * held_size); // Calculate the cell's X position
                 let cell_y = held_y + 25 + (y as i32 * held_size); // Calculate the cell's Y position
@@ -269,7 +262,7 @@ fn render_game() {
                         cell_y,
                         held_size,
                         held_size,
-                        game_state.held_piece.color,
+                        read_game_state().held_piece.color,
                     );
                 }
             }
@@ -289,7 +282,7 @@ fn render_game() {
             scaled_value(20, scale_y),
         );
 
-        for (i, piece) in game_state.piece_queue.iter().enumerate() {
+        for (i, piece) in read_game_state().piece_queue.iter().enumerate() {
             let piece_x = queue_x - scaled_value(25, scale_x);
             let piece_y = queue_y + 25 + ((i as i32) * 5 * queue_size);
 
@@ -309,7 +302,6 @@ fn render_game() {
             }
         }
 
-        drop(game_state);
         if read_game_state().game_over {
             render_game_over(&mut d, scale_x, scale_y);
         }
@@ -354,13 +346,13 @@ fn render_game_over(d: &mut RaylibDrawHandle, scale_x: f32, scale_y: f32) {
         ),
         Some(rstr!("Restart")),
     ) {
-        let game_manager = &mut write_game_manager();
-        game_manager.in_game = true;
-        game_manager.running = true;
-        game_manager.input_buffer.clear();
+        // let game_manager = &mut write_game_manager();
+        // game_manager.in_game = true;
+        // game_manager.running = true;
+        // game_manager.input_buffer.clear();
 
-        let mut game_state = write_game_state();
-        *game_state = GameState::new();
+        // let mut game_state = write_game_state();
+        // *game_state = GameState::new();
     }
 
     if d.gui_button(
@@ -372,9 +364,9 @@ fn render_game_over(d: &mut RaylibDrawHandle, scale_x: f32, scale_y: f32) {
         ),
         Some(rstr!("Main Menu")),
     ) {
-        let game_manager = &mut write_game_manager();
-        game_manager.in_game = false;
-        game_manager.running = false;
+        // let game_manager = &mut write_game_manager();
+        // game_manager.in_game = false;
+        // game_manager.running = false;
     }
 
     // quit button
@@ -387,7 +379,7 @@ fn render_game_over(d: &mut RaylibDrawHandle, scale_x: f32, scale_y: f32) {
         ),
         Some(rstr!("Quit")),
     ) {
-        write_game_manager().should_quit = true;
+        // write_game_manager().should_quit = true;
     }
 }
 
@@ -425,7 +417,7 @@ fn render_pause_menu(d: &mut RaylibDrawHandle, scale_x: f32, scale_y: f32) {
         ),
         Some(rstr!("Resume")),
     ) {
-        write_game_manager().running = true;
+        // write_game_manager().running = true;
     }
 
     if d.gui_button(
@@ -437,9 +429,9 @@ fn render_pause_menu(d: &mut RaylibDrawHandle, scale_x: f32, scale_y: f32) {
         ),
         Some(rstr!("Main Menu")),
     ) {
-        let game_manager = &mut write_game_manager();
-        game_manager.in_game = false;
-        game_manager.running = false;
+        // let game_manager = &mut write_game_manager();
+        // game_manager.in_game = false;
+        // game_manager.running = false;
     }
 
     // quit button
@@ -452,6 +444,6 @@ fn render_pause_menu(d: &mut RaylibDrawHandle, scale_x: f32, scale_y: f32) {
         ),
         Some(rstr!("Quit")),
     ) {
-        write_game_manager().should_quit = true;
+        // write_game_manager().should_quit = true;
     }
 }

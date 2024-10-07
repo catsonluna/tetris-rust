@@ -2,7 +2,7 @@ use event_listener_primitives::HandlerId;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
 
-use crate::engine::events::events::{RENDER_EVENT, TICK_EVENT, UPDATE_EVENT};
+use crate::engine::events::events::{BUTTON_EVENT, RENDER_EVENT, TICK_EVENT, UPDATE_EVENT};
 
 use super::base::{render::on_render, tick::on_tick, update::on_update};
 
@@ -12,8 +12,14 @@ pub fn register_events() {
     register(UPDATE_EVENT.on_event(on_update));
     register(TICK_EVENT.on_event(on_tick));
     register(RENDER_EVENT.on_event(on_render));
+    register(BUTTON_EVENT.on_event(test));
 }
 
 pub fn register(handler: HandlerId) {
     EVENT_HANDLES.lock().unwrap().push(handler);
+}
+
+
+pub fn test(test: String) {
+    println!("{}", test);
 }

@@ -1,4 +1,4 @@
-use std::time::{Duration, Instant};
+use std::{sync::Arc, time::{Duration, Instant}};
 
 use raylib::ffi::KeyboardKey;
 
@@ -6,7 +6,7 @@ use crate::engine::{
     events::events::{RENDER_EVENT, TICK_EVENT},
     lib::RAYLIB_STATE,
     managers::{
-        game_manager::{read_game_manager, write_game_manager, KeyboardAction},
+        game_manager::{read_game_manager, write_game_manager_delta_time, write_game_manager_input_buffer, write_game_manager_last_update, write_game_manager_tick_accumulator, KeyboardAction},
         game_statics::read_game_statics,
     },
 };
@@ -32,32 +32,34 @@ pub fn do_tick() {
     let tickrate = (1.0 / read_game_statics().tick_rate as f32 * 1000.0) as u64;
     let now = Instant::now();
     let delta_time = now.duration_since(read_game_manager().last_update);
-    write_game_manager().delta_time = delta_time.as_micros();
+    write_game_manager_delta_time(delta_time.as_micros());
 
-    write_game_manager().last_update = now;
-    write_game_manager().tick_accumulator += delta_time;
+    // game_manager.last_update = now;
+    // game_manager.tick_accumulator += delta_time;
+    write_game_manager_last_update(now);
+    write_game_manager_tick_accumulator(read_game_manager().tick_accumulator + delta_time);
 
     while read_game_manager().tick_accumulator >= Duration::from_millis(tickrate) {
-        write_game_manager().tick_accumulator -= Duration::from_millis(tickrate);
+        // game_manager.tick_accumulator -= Duration::from_millis(tickrate);
+        write_game_manager_tick_accumulator(read_game_manager().tick_accumulator - Duration::from_millis(tickrate));
+
         TICK_EVENT.call();
     }
 }
 
 pub fn updated_input_buffer() {
-    let mut game_manager = write_game_manager();
     {
         let mut state = RAYLIB_STATE.lock().unwrap();
         if let Some(ref mut raylib_state) = *state {
             for key in USED_KEYS.iter() {
+                let mut input_buffer = read_game_manager().input_buffer.clone();
                 if raylib_state.rl.is_key_pressed(*key) {
-                    game_manager
-                        .input_buffer
-                        .push((*key, KeyboardAction::Pressed));
+                    input_buffer.push((*key, KeyboardAction::Pressed));
+
                 } else if raylib_state.rl.is_key_released(*key) {
-                    game_manager
-                        .input_buffer
-                        .push((*key, KeyboardAction::Released));
+                    input_buffer.push((*key, KeyboardAction::Released));
                 }
+                write_game_manager_input_buffer(input_buffer);
             }
         }
     }

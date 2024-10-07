@@ -1,11 +1,9 @@
+use arc_swap::ArcSwap;
 use chrono::{DateTime, Utc};
-use once_cell::sync::Lazy;
+use lazy_static::lazy_static;
+
 use raylib::{color::Color, ffi::KeyboardKey};
-use std::{
-    fmt::Debug,
-    sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
-    time::{Duration, Instant},
-};
+use std::{ fmt::Debug, sync::Arc, time::{Duration, Instant}};
 
 use serde::{Deserialize, Serialize};
 
@@ -36,6 +34,16 @@ impl SaveData {
             check_sum: 0,
             best_game: GameData::new(),
             history: vec![],
+        }
+    }
+}
+
+impl Clone for SaveData {
+    fn clone(&self) -> Self {
+        Self {
+            check_sum: self.check_sum,
+            best_game: self.best_game.clone(),
+            history: self.history.clone(),
         }
     }
 }
@@ -92,6 +100,16 @@ impl Debug for KeyboardAction {
             KeyboardAction::Released => write!(f, "Released"),
         }
     }
+}
+
+impl Clone for KeyboardAction {
+    fn clone(&self) -> Self {
+        match self {
+            KeyboardAction::Pressed => KeyboardAction::Pressed,
+            KeyboardAction::Released => KeyboardAction::Released,
+        }
+    }
+
 }
 
 pub struct GameManager {
@@ -256,12 +274,99 @@ impl GameManager {
 unsafe impl Send for GameManager {}
 unsafe impl Sync for GameManager {}
 
-pub static GAME_MANAGER: Lazy<RwLock<GameManager>> = Lazy::new(|| RwLock::new(GameManager::new()));
-
-pub fn read_game_manager() -> RwLockReadGuard<'static, GameManager> {
-    GAME_MANAGER.read().unwrap()
+impl Clone for GameManager {
+    fn clone(&self) -> Self {
+        GameManager {
+            rng: rand::thread_rng(), // The RNG can't be cloned directly; reinitialize
+            last_update: self.last_update,
+            tick_accumulator: self.tick_accumulator,
+            delta_time: self.delta_time,
+            in_game: self.in_game,
+            running: self.running,
+            should_quit: self.should_quit,
+            input_buffer: self.input_buffer.clone(),
+            pieces: self.pieces.clone(),
+            app_start_time: self.app_start_time,
+            save_data: self.save_data.clone(),
+        }
+    }
 }
 
-pub fn write_game_manager() -> RwLockWriteGuard<'static, GameManager> {
-    GAME_MANAGER.write().unwrap()
+
+lazy_static! {
+    static ref GAME_MANAGER: ArcSwap<GameManager> = ArcSwap::new(Arc::new(GameManager::new()));
+}
+
+pub fn read_game_manager() -> Arc<GameManager> {
+    GAME_MANAGER.load_full()
+}
+
+pub fn read_game_manager_only() -> GameManager {
+    (**GAME_MANAGER.load()).clone()
+}
+
+
+pub fn write_game_manager(game_manager: GameManager) {
+    GAME_MANAGER.store(Arc::new(game_manager));
+}
+
+// make a function for storing each of the game manager fields
+pub fn write_game_manager_running(running: bool) {
+    let mut game_manager = read_game_manager_only();
+    game_manager.running = running;
+    GAME_MANAGER.store(Arc::new(game_manager));
+}
+
+pub fn write_game_manager_in_game(in_game: bool) {
+    let mut game_manager = read_game_manager_only();
+    game_manager.in_game = in_game;
+    GAME_MANAGER.store(Arc::new(game_manager));
+}
+
+pub fn write_game_manager_should_quit(should_quit: bool) {
+    let mut game_manager = read_game_manager_only();
+    game_manager.should_quit = should_quit;
+    GAME_MANAGER.store(Arc::new(game_manager));
+}
+
+pub fn write_game_manager_input_buffer(input_buffer: Vec<(KeyboardKey, KeyboardAction)>) {
+    let mut game_manager = read_game_manager_only();
+    game_manager.input_buffer = input_buffer;
+    GAME_MANAGER.store(Arc::new(game_manager));
+}
+
+pub fn write_game_manager_pieces(pieces: Vec<Block>) {
+    let mut game_manager = read_game_manager_only();
+    game_manager.pieces = pieces;
+    GAME_MANAGER.store(Arc::new(game_manager));
+}
+
+pub fn write_game_manager_save_data(save_data: SaveData) {
+    let mut game_manager = read_game_manager_only();
+    game_manager.save_data = save_data;
+    GAME_MANAGER.store(Arc::new(game_manager));
+}
+
+pub fn write_game_manager_last_update(last_update: Instant) {
+    let mut game_manager = read_game_manager_only();
+    game_manager.last_update = last_update;
+    GAME_MANAGER.store(Arc::new(game_manager));
+}
+
+pub fn write_game_manager_tick_accumulator(tick_accumulator: Duration) {
+    let mut game_manager = read_game_manager_only();
+    game_manager.tick_accumulator = tick_accumulator;
+    GAME_MANAGER.store(Arc::new(game_manager));
+}
+
+pub fn write_game_manager_delta_time(delta_time: u128) {
+    let mut game_manager = read_game_manager_only();
+    game_manager.delta_time = delta_time;
+    GAME_MANAGER.store(Arc::new(game_manager));
+}
+
+pub fn write_game_manager_app_start_time(app_start_time: Instant) {
+    let mut game_manager = read_game_manager_only();
+    game_manager.app_start_time = app_start_time;
+    GAME_MANAGER.store(Arc::new(game_manager));
 }

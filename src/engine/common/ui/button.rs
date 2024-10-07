@@ -1,4 +1,5 @@
 use raylib::prelude::*;
+use crate::engine::events::events::BUTTON_EVENT;
 
 pub fn button(
     d: &mut RaylibDrawHandle,
@@ -13,7 +14,8 @@ pub fn button(
     font_color: Color,
     hover_font_color: Color,
     disabled: bool,
-) -> bool {
+    event: String
+) {
     let button_x = x - width / 2;
     let button_y = y - height / 2;
 
@@ -26,10 +28,7 @@ pub fn button(
         let text_x = button_x + (width - text_width) / 2;
         let text_y = button_y + (height - text_height) / 2;
         d.draw_text(&text, text_x, text_y, font_size, Color::GRAY);
-        return false;
     }
-
-    let mut clicked = false;
 
     let mouse = d.get_mouse_position();
     let mouse_x = mouse.x as i32;
@@ -49,7 +48,7 @@ pub fn button(
         let text_y = button_y + (height - text_height) / 2;
         d.draw_text(&text, text_x, text_y, font_size, hover_font_color);
         if d.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
-            clicked = true;
+            BUTTON_EVENT.call(event);
         }
     } else {
         d.draw_rectangle(button_x, button_y, width, height, color);
@@ -60,5 +59,4 @@ pub fn button(
         let text_y = button_y + (height - text_height) / 2;
         d.draw_text(&text, text_x, text_y, font_size, font_color);
     }
-    clicked
 }

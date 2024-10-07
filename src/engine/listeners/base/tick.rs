@@ -2,10 +2,9 @@ use std::fmt::Debug;
 
 use rand::{seq::SliceRandom, Rng};
 
-use crate::engine::{managers::{
-    game_manager::{self, write_game_manager, KeyboardAction},
-    game_state::{self, write_game_state},
-}, common::storage};
+use crate::engine::{common::storage, managers::{
+    game_manager::{read_game_manager, write_game_manager_input_buffer, write_game_manager_running, write_game_manager_save_data, KeyboardAction}, game_state::{read_game_state, write_game_state_all_pieces, write_game_state_arena, write_game_state_controlling, write_game_state_current_center, write_game_state_current_piece, write_game_state_down_hold, write_game_state_drop_ticks, write_game_state_game_data, write_game_state_game_over, write_game_state_ground_ticks, write_game_state_has_held, write_game_state_held_piece, write_game_state_left_hold, write_game_state_lines_till_next_level, write_game_state_piece_queue, write_game_state_right_hold},
+}};
 use raylib::prelude::*;
 
 #[derive(PartialEq)] // Add the PartialEq trait
@@ -35,59 +34,57 @@ impl Debug for Action {
 
 pub fn on_tick() {
     // println!("Tick");
-    let game_state = &mut write_game_state();
-    let game_manager = &mut write_game_manager();
 
-    if !game_manager.in_game {
-        return;
-    }
 
-    if !game_manager.running {
-        return;
-    }
-    if game_state.game_over {
-        return;
-    }
-    clear_ghost(game_state);
-    should_respawn(game_state);
-    check_game_over(game_state, game_manager);
-    if !game_manager.in_game {
+    if !read_game_manager().in_game {
         return;
     }
 
-    if !game_manager.running {
+    if !read_game_manager().running {
         return;
     }
-    if game_state.game_over {
+    if read_game_state().game_over {
         return;
     }
-    check_spawn(game_manager, game_state);
-    check_move(game_manager, game_state);
-    move_down(game_state, false);
-    destoy_lines(game_state);
-    draw_ghost(game_state);
-    if game_manager.input_buffer.len() > 0 {
-        game_manager.input_buffer.clear();
+    clear_ghost();
+    should_respawn();
+    check_game_over();
+    if !read_game_manager().in_game {
+        return;
+    }
+
+    if !read_game_manager().running {
+        return;
+    }
+    if read_game_state().game_over {
+        return;
+    }
+    check_spawn();
+    check_move();
+    move_down(false);
+    destoy_lines();
+    draw_ghost();
+    if read_game_manager().input_buffer.len() > 0 {
+        write_game_manager_input_buffer(vec![]);
     }
 }
 
-fn should_respawn(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
-    if game_state.ground_ticks > 48 {
-        game_state.ground_ticks = 0;
-        game_state.controlling = 0;
+fn should_respawn() {
+
+    if read_game_state().ground_ticks > 48 {
+        write_game_state_ground_ticks(0);
+        write_game_state_controlling(0);
     }
 }
 
 fn check_spawn(
-    game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager>,
-    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
 ) {
-    if game_state.controlling == 0 {
-        let mut rng = game_manager.rng.clone();
+    if read_game_state().controlling == 0 {
+        let mut rng = read_game_manager().rng.clone();
 
         // check if piece queue is less than 6
-        if game_state.piece_queue.len() < 8 {
-            let shapes = game_manager.pieces.clone();
+        if read_game_state().piece_queue.len() < 8 {
+            let shapes = read_game_manager().pieces.clone();
             let mut temp_shpaes = shapes.clone();
             let mut cloned_temp_shpaes = temp_shpaes.clone();
             temp_shpaes.append(&mut cloned_temp_shpaes);
@@ -95,129 +92,170 @@ fn check_spawn(
             temp_shpaes.shuffle(&mut rng);
 
             // append the shuffled shapes to the piece queue
-            game_state.piece_queue.append(&mut temp_shpaes);
+            // game_state.piece_queue.append(&mut temp_shpaes);
+            let mut piece_queue = read_game_state().piece_queue.clone();
+            piece_queue.append(&mut temp_shpaes);
+            write_game_state_piece_queue(piece_queue);
         }
 
         // get the first piece in the queue
-        let shape = game_state.piece_queue.remove(0);
+        let shape = read_game_state().piece_queue.clone().remove(0);
 
-        game_state.current_piece = shape.clone();
+        write_game_state_current_piece(shape.clone());
 
         let random = rng.gen::<i32>();
 
+        let mut arena = read_game_state().arena.clone();
         for (y, row) in shape.layout.iter().enumerate() {
             for (x, &val) in row.iter().enumerate() {
-                game_state.arena[y][x + 8] = if val == 1 { random } else { 0 };
+                arena[y][x + 8] = if val == 1 { random } else { 0 };
             }
         }
+        write_game_state_arena(arena);
 
-        game_state.current_center = (10, 2);
-        game_state.controlling = random;
-        game_state.all_pieces.push((random, shape.clone()));
-        game_state.has_held = false;
+        // game_state.current_center = (10, 2);
+        // game_state.controlling = random;
+        // game_state.all_pieces.push((random, shape.clone()));
+        // game_state.has_held = false;
+
+        write_game_state_current_center((10, 2));
+        write_game_state_controlling(random);
+        write_game_state_all_pieces(vec![(random, shape.clone())]);
+        write_game_state_has_held(false);
+
     }
 }
 
 fn check_move(
-    game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager>,
-    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
 ) {
-    let actions = process_input_buffer(game_manager, game_state);
+    let actions = process_input_buffer();
 
     for action in actions {
         match action {
-            Action::Rotate => rotate(game_state),
-            Action::MoveRight => move_right(game_state),
-            Action::MoveLeft => move_left(game_state),
-            Action::MoveDown => _ = move_down(game_state, true),
-            Action::Drop => drop(game_state),
-            Action::Hold => hold(game_state, game_manager),
+            Action::Rotate => rotate(),
+            Action::MoveRight => move_right(),
+            Action::MoveLeft => move_left(),
+            Action::MoveDown => _ = move_down(true),
+            Action::Drop => drop(),
+            Action::Hold => hold(),
             Action::Pause => {
-                game_manager.running = !game_manager.running;
+                write_game_manager_running(false);
             }
         }
     }
 
-    if game_state.right_hold.is_pressed {
-        game_state.right_hold.move_ticks += 1;
-        if game_state.right_hold.move_ticks > 10 {
-            move_right(game_state);
-            game_state.right_hold.move_ticks = 9;
+    if read_game_state().right_hold.is_pressed {
+        // read_game_state().right_hold.move_ticks += 1;
+        let mut right_hold = read_game_state().right_hold.clone();
+        right_hold.move_ticks += 1;
+        write_game_state_right_hold(right_hold);
+        if read_game_state().right_hold.move_ticks > 10 {
+            move_right();
+            let mut right_hold = read_game_state().right_hold.clone();
+            right_hold.move_ticks = 9;
+            write_game_state_right_hold(right_hold);
         }
     } else {
-        game_state.right_hold.move_ticks = 0;
+        let mut right_hold = read_game_state().right_hold.clone();
+        right_hold.move_ticks = 0;
+        write_game_state_right_hold(right_hold);
     }
 
-    if game_state.left_hold.is_pressed {
-        game_state.left_hold.move_ticks += 1;
-        if game_state.left_hold.move_ticks > 10 {
-            move_left(game_state);
-            game_state.left_hold.move_ticks = 9;
+    if read_game_state().left_hold.is_pressed {
+        // read_game_state().left_hold.move_ticks += 1;
+        let mut left_hold = read_game_state().left_hold.clone();
+        left_hold.move_ticks += 1;
+        write_game_state_left_hold(left_hold);
+        if read_game_state().left_hold.move_ticks > 10 {
+            move_left();
+            // game_state.left_hold.move_ticks = 9;
+            let mut left_hold = read_game_state().left_hold.clone();
+            left_hold.move_ticks = 9;
+            write_game_state_left_hold(left_hold);
         }
     } else {
-        game_state.left_hold.move_ticks = 0;
+        // game_state.left_hold.move_ticks = 0;
+        let mut left_hold = read_game_state().left_hold.clone();
+        left_hold.move_ticks = 0;
+        write_game_state_left_hold(left_hold);
     }
 
-    if game_state.down_hold.is_pressed {
-        game_state.down_hold.move_ticks += 1;
-        if game_state.down_hold.move_ticks > 10 {
-            move_down(game_state, true);
-            game_state.down_hold.move_ticks = 9;
+    if read_game_state().down_hold.is_pressed {
+        // read_game_state().down_hold.move_ticks += 1;
+        let mut down_hold = read_game_state().down_hold.clone();
+        down_hold.move_ticks += 1;
+        write_game_state_down_hold(down_hold);
+        if read_game_state().down_hold.move_ticks > 10 {
+            move_down(true);
+            // game_state.down_hold.move_ticks = 9;
+            let mut down_hold = read_game_state().down_hold.clone();
+            down_hold.move_ticks = 9;
+            write_game_state_down_hold(down_hold);
         }
     } else {
-        game_state.down_hold.move_ticks = 0;
+        // game_state.down_hold.move_ticks = 0;
+        let mut down_hold = read_game_state().down_hold.clone();
+        down_hold.move_ticks = 0;
+        write_game_state_down_hold(down_hold);
     }
 }
 
-fn move_right(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
+fn move_right() {
     let mut can_move = true;
     // go over each row, and get the furthest right value that is 1, then check if it can move right
-    for y in 0..game_state.arena.len() {
+    for y in 0..read_game_state().arena.len() {
         let mut furthest_right = None; // Start as None to check if there's a 1
-        for x in (0..game_state.arena[y].len()).rev() {
+        for x in (0..read_game_state().arena[y].len()).rev() {
             // Iterate from right to left
-            if game_state.arena[y][x] == game_state.controlling {
+            if read_game_state().arena[y][x] == read_game_state().controlling {
                 furthest_right = Some(x);
                 break; // We can break here as we're looking for the first (furthest right) 1
             }
         }
         if let Some(x) = furthest_right {
-            if x == game_state.arena[y].len() - 1 {
+            if x == read_game_state().arena[y].len() - 1 {
                 can_move = false; // If it's already at the right edge, it can't move right
-            } else if game_state.arena[y][x + 1] != 0 {
+            } else if read_game_state().arena[y][x + 1] != 0 {
                 can_move = false; // If the space to the right is not 0, it can't move
             }
         }
     }
 
     // If it can move right, move everything that is 1 to the right
+    let mut arena = read_game_state().arena.clone();
     if can_move {
-        for y in 0..game_state.arena.len() {
-            for x in (0..game_state.arena[y].len()).rev() {
+        for y in 0..arena.len() {
+            for x in (0..arena[y].len()).rev() {
                 // Iterate from right to left
-                if game_state.arena[y][x] == game_state.controlling {
-                    if x < game_state.arena[y].len() - 1 && game_state.arena[y][x + 1] == 0 {
-                        game_state.arena[y][x + 1] = game_state.controlling;
-                        game_state.arena[y][x] = 0;
+                if arena[y][x] == read_game_state().controlling {
+                    if x < arena[y].len() - 1 && arena[y][x + 1] == 0 {
+                        arena[y][x + 1] = read_game_state().controlling;
+                        arena[y][x] = 0;
+
                     }
                 }
             }
         }
 
+        write_game_state_arena(arena);
+
         // move the center of the piece to the right
-        game_state.current_center.0 += 1;
+        // game_state.current_center.0 += 1;
+        let current_center = read_game_state().current_center.clone();
+        write_game_state_current_center((current_center.0 + 1, current_center.1));
+
     }
 }
 
-fn move_left(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
+fn move_left() {
     let mut can_move = true;
 
     // Go over each row and get the furthest left value that is 1, then check if it can move left
-    for y in 0..game_state.arena.len() {
+    for y in 0..read_game_state().arena.len() {
         let mut furthest_left = None; // Start as None to check if there's a 1
-        for x in 0..game_state.arena[y].len() {
+        for x in 0..read_game_state().arena[y].len() {
             // Iterate from left to right
-            if game_state.arena[y][x] == game_state.controlling {
+            if read_game_state().arena[y][x] == read_game_state().controlling {
                 furthest_left = Some(x);
                 break; // We can break here as we're looking for the first (furthest left) 1
             }
@@ -225,48 +263,51 @@ fn move_left(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameSt
         if let Some(x) = furthest_left {
             if x == 0 {
                 can_move = false; // If it's already at the left edge, it can't move left
-            } else if game_state.arena[y][x - 1] != 0 {
+            } else if read_game_state().arena[y][x - 1] != 0 {
                 can_move = false; // If the space to the left is not 0, it can't move
             }
         }
     }
-
+    let mut arena = read_game_state().arena.clone();
     // If it can move left, move everything that is 1 to the left
     if can_move {
-        for y in 0..game_state.arena.len() {
-            for x in 0..game_state.arena[y].len() {
+        for y in 0..arena.len() {
+            for x in 0..arena[y].len() {
                 // Iterate from left to right
-                if game_state.arena[y][x] == game_state.controlling {
-                    if x > 0 && game_state.arena[y][x - 1] == 0 {
-                        game_state.arena[y][x - 1] = game_state.controlling;
-                        game_state.arena[y][x] = 0;
+                if arena[y][x] == read_game_state().controlling {
+                    if x > 0 && arena[y][x - 1] == 0 {
+                        arena[y][x - 1] = read_game_state().controlling;
+                        arena[y][x] = 0;
                     }
                 }
             }
         }
         // move the center of the piece to the left
-        game_state.current_center.0 -= 1;
+        // game_state.current_center.0 -= 1;
+        write_game_state_arena(arena);
+        let current_center = read_game_state().current_center.clone();
+        write_game_state_current_center((current_center.0 - 1, current_center.1));
     }
 }
 
 fn move_down(
-    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
     forced: bool,
 ) -> bool {
     let mut can_move_down = true;
 
-    if game_state.drop_ticks > 0.0 && !forced {
-        game_state.drop_ticks -= game_state.drop_speed;
+    if read_game_state().drop_ticks > 0.0 && !forced {
+        // read_game_state().drop_ticks -= read_game_state().drop_speed;
+        write_game_state_drop_ticks(read_game_state().drop_ticks - read_game_state().drop_speed);
         return false;
     }
 
     // Check if the piece can move down
-    for y in (0..game_state.arena.len()).rev() {
-        for x in 0..game_state.arena[y].len() {
-            if game_state.arena[y][x] == game_state.controlling {
-                if y + 1 >= game_state.arena.len()
-                    || game_state.arena[y + 1][x] != 0
-                        && game_state.arena[y + 1][x] != game_state.controlling
+    for y in (0..read_game_state().arena.len()).rev() {
+        for x in 0..read_game_state().arena[y].len() {
+            if read_game_state().arena[y][x] == read_game_state().controlling {
+                if y + 1 >= read_game_state().arena.len()
+                    || read_game_state().arena[y + 1][x] != 0
+                        && read_game_state().arena[y + 1][x] != read_game_state().controlling
                 {
                     can_move_down = false;
                     break;
@@ -278,55 +319,71 @@ fn move_down(
         }
     }
 
+    let mut arena = read_game_state().arena.clone();
+
     // If it can move down, move everything that is controlling down
     if can_move_down {
-        for y in (0..game_state.arena.len()).rev() {
-            for x in 0..game_state.arena[y].len() {
-                if game_state.arena[y][x] == game_state.controlling {
-                    if y + 1 < game_state.arena.len() && game_state.arena[y + 1][x] == 0 {
-                        game_state.arena[y + 1][x] = game_state.controlling;
-                        game_state.arena[y][x] = 0;
+        for y in (0..arena.len()).rev() {
+            for x in 0..arena[y].len() {
+                if arena[y][x] == read_game_state().controlling {
+                    if y + 1 < arena.len() && arena[y + 1][x] == 0 {
+                        arena[y + 1][x] = read_game_state().controlling;
+                        arena[y][x] = 0;
                     }
                 }
             }
         }
-        game_state.drop_ticks = 12.0;
-        game_state.current_center.1 += 1;
+        // game_state.drop_ticks = 12.0;
+        // game_state.current_center.1 += 1;
+        write_game_state_arena(arena);
+        write_game_state_drop_ticks(12.0);
+        let current_center = read_game_state().current_center.clone();
+        write_game_state_current_center((current_center.0, current_center.1 + 1));
         return true;
     } else {
         // If it can't move down, update the ground ticks
-        game_state.ground_ticks += 1;
+        // game_state.ground_ticks += 1;
+        let ground_ticks = read_game_state().ground_ticks + 1;
+        write_game_state_ground_ticks(ground_ticks);
         return false;
     }
 }
 
-fn drop(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
-    while move_down(game_state, true) {}
-
-    // If no more moves possible, update state
-    game_state.controlling = 0;
-    game_state.drop_ticks = 0.0;
+fn drop() {
+    while move_down(true) {}
+    // game_state.controlling = 0;
+    // game_state.drop_ticks = 0.0;
+    write_game_state_controlling(0);
+    write_game_state_drop_ticks(0.0);
 }
 
-fn check_game_over(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>, game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager>) {
+fn check_game_over() {
+    let arena = read_game_state().arena.clone();
     for y in 0..5 {
-        for x in 0..game_state.arena[y].len() {
-            if game_state.arena[y][x] != 0 && game_state.arena[y][x] != game_state.controlling {
-                game_state.game_over = true;
+        for x in 0..arena[y].len() {
+            if arena[y][x] != 0 && arena[y][x] != read_game_state().controlling {
+                // game_state.game_over = true;
+                write_game_state_game_over(true);
 
                 // set the end time
-                game_state.game_data.end_time = chrono::offset::Utc::now();
+                // game_state.game_data.end_time = chrono::offset::Utc::now();
+                let mut game_data = read_game_state().game_data.clone();
+                game_data.end_time = chrono::offset::Utc::now();
+                write_game_state_game_data(game_data);
 
                 // add the game to history
-                game_manager.save_data.history.push(game_state.game_data.clone());
+                // game_manager.save_data.history.push(game_state.game_data.clone());
 
                 // if the score is higher, set this as the best game
-                if game_state.game_data.score > game_manager.save_data.best_game.score {
-                    game_manager.save_data.best_game = game_state.game_data.clone();
+                if read_game_state().game_data.score > read_game_manager().save_data.best_game.score {
+                    // game_manager.save_data.best_game = game_state.game_data.clone();
+                    let mut save_data = read_game_manager().save_data.clone();
+                    save_data.best_game = read_game_state().game_data.clone();
+                    write_game_manager_save_data(save_data);
                 }
 
                 // save the game data
-                let serialized_save_data = ron::ser::to_string(&game_manager.save_data).unwrap();
+                let serialized_save_data = ron::ser::to_string(&read_game_manager().save_data).unwrap();
                 storage::lib::save("save.rvrs", &serialized_save_data);
 
                 break;
@@ -335,15 +392,16 @@ fn check_game_over(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::
     }
 }
 
-fn destoy_lines(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
+fn destoy_lines() {
     let mut was_despawned = true;
     let mut despawned = 0;
+    let mut arena = read_game_state().arena.clone();
     while was_despawned {
         was_despawned = false;
-        for y in (0..game_state.arena.len()).rev() {
+        for y in (0..arena.len()).rev() {
             let mut full = true;
-            for x in 0..game_state.arena[y].len() {
-                if game_state.arena[y][x] == 0 || game_state.arena[y][x] == game_state.controlling {
+            for x in 0..arena[y].len() {
+                if arena[y][x] == 0 || arena[y][x] == read_game_state().controlling {
                     full = false;
                 }
             }
@@ -351,68 +409,89 @@ fn destoy_lines(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::Gam
                 was_despawned = true;
                 despawned += 1;
                 for y2 in (0..y).rev() {
-                    for x in 0..game_state.arena[y2].len() {
-                        game_state.arena[y2 + 1][x] = game_state.arena[y2][x];
+                    for x in 0..arena[y2].len() {
+                        arena[y2 + 1][x] = arena[y2][x];
                     }
                 }
             }
         }
     }
+
+    write_game_state_arena(arena);
     if despawned > 0 {
-        let level = if game_state.game_data.level > 15 {
+        let level = if read_game_state().game_data.level > 15 {
             15
         } else {
-            game_state.game_data.level
+            read_game_state().game_data.level
         };
-        game_state.game_data.score += (despawned * 100 * level) as i32;
+        // game_state.game_data.score += (despawned * 100 * level) as i32;
+        let mut game_data = read_game_state().game_data.clone();
+        game_data.score += (despawned * 100 * level) as i32;
+        write_game_state_game_data(game_data);
 
-        game_state.lines_till_next_level -= despawned as i32;
-        if game_state.lines_till_next_level <= 0 {
-            game_state.game_data.level += 1;
-            if game_state.game_data.level < 13 {
-                game_state.drop_speed = 1.0 + (game_state.game_data.level as f32 * 0.75) / 2f32;
+        // read_game_state().lines_till_next_level -= despawned as i32;
+        let mut lines_till_next_level = read_game_state().lines_till_next_level - despawned as i32;
+        write_game_state_lines_till_next_level(lines_till_next_level);
+        if read_game_state().lines_till_next_level <= 0 {
+            // game_state.game_data.level += 1;
+            let mut game_data = read_game_state().game_data.clone();
+            game_data.level += 1;
+            write_game_state_game_data(game_data);
+            if read_game_state().game_data.level < 13 {
+                // game_state.drop_speed = 1.0 + (game_state.game_data.level as f32 * 0.75) / 2f32;
+                write_game_state_drop_ticks(1.0 + (read_game_state().game_data.level as f32 * 0.75) / 2f32);
             }
-            game_state.lines_till_next_level = 5 + (game_state.game_data.level as f32 * 1.2) as i32;
+            // game_state.lines_till_next_level = 5 + (game_state.game_data.level as f32 * 1.2) as i32;
+            write_game_state_lines_till_next_level(5 + (read_game_state().game_data.level as f32 * 1.2) as i32);
         }
         
-        game_state.game_data.lines_cleared += despawned as i32;
-
-        println!("Score: {:?}", game_state.game_data);
+        // game_state.game_data.lines_cleared += despawned as i32;
+        let mut game_data = read_game_state().game_data.clone();
+        game_data.lines_cleared += despawned as i32;
+        write_game_state_game_data(game_data);
     }
 }
 
-fn process_input_buffer(
-    game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager>,
-    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
-) -> Vec<&'static Action> {
+fn process_input_buffer() -> Vec<&'static Action> {
     let mut actions: Vec<&Action> = vec![];
 
-    for (key, key_action) in game_manager.input_buffer.iter() {
+    for (key, key_action) in read_game_manager().input_buffer.iter() {
         if let Some(action) = get_action(key) {
             match action {
                 Action::MoveRight => {
+                    let mut right_hold = read_game_state().right_hold.clone();
                     if key_action == &KeyboardAction::Pressed {
                         actions.push(&Action::MoveRight);
-                        game_state.right_hold.is_pressed = true;
+                        // game_state.right_hold.is_pressed = true;
+                        right_hold.is_pressed = true;
                     } else {
-                        game_state.right_hold.is_pressed = false;
+                        // game_state.right_hold.is_pressed = false;
+                        right_hold.is_pressed = false;
                     }
+                    write_game_state_right_hold(right_hold);
                 }
                 Action::MoveLeft => {
+                    let mut left_hold = read_game_state().left_hold.clone();
                     if key_action == &KeyboardAction::Pressed {
                         actions.push(&Action::MoveLeft);
-                        game_state.left_hold.is_pressed = true;
+                        // game_state.left_hold.is_pressed = true;
+                        left_hold.is_pressed = true;
                     } else {
-                        game_state.left_hold.is_pressed = false;
+                        // game_state.left_hold.is_pressed = false;
+                        left_hold.is_pressed = false;
                     }
                 }
                 Action::MoveDown => {
+                    let mut down_hold = read_game_state().down_hold.clone();
                     if key_action == &KeyboardAction::Pressed {
                         actions.push(&Action::MoveDown);
-                        game_state.down_hold.is_pressed = true;
+                        // game_state.down_hold.is_pressed = true;
+                        down_hold.is_pressed = true;
                     } else {
-                        game_state.down_hold.is_pressed = false;
+                        // game_state.down_hold.is_pressed = false;
+                        down_hold.is_pressed = false;
                     }
+                    write_game_state_down_hold(down_hold);
                 }
                 Action::Drop => {
                     if key_action == &KeyboardAction::Pressed {
@@ -454,13 +533,14 @@ fn get_action(key: &KeyboardKey) -> Option<Action> {
     }
 }
 
-fn rotate(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
+fn rotate() {
     // Remove the current piece from the arena
-    let (center_x, center_y) = game_state.current_center;
-    let controlling_id = game_state.controlling;
-    let mut matrix = game_state.current_piece.layout.clone();
+    let (center_x, center_y) = read_game_state().current_center;
+    let controlling_id = read_game_state().controlling;
+    let mut matrix = read_game_state().current_piece.layout.clone();
 
-    let block = match game_state
+    let binding = read_game_state().clone();
+    let block = match binding
         .all_pieces
         .iter()
         .find(|&p| p.0 == controlling_id)
@@ -482,6 +562,8 @@ fn rotate(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState
 
     matrix = new_matrix;
 
+    let mut arena = read_game_state().arena.clone();
+
     for i in 0..matrix.len() {
         for j in 0..matrix[i].len() {
             if matrix[i][j] == 1 {
@@ -492,11 +574,11 @@ fn rotate(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState
                 let pos_y = center_y as i32 + y;
 
                 if pos_x < 0
-                    || pos_x >= game_state.arena[0].len() as i32
+                    || pos_x >= arena[0].len() as i32
                     || pos_y < 0
-                    || pos_y >= game_state.arena.len() as i32
-                    || (game_state.arena[pos_y as usize][pos_x as usize] != 0
-                        && game_state.arena[pos_y as usize][pos_x as usize] != controlling_id)
+                    || pos_y >= arena.len() as i32
+                    || (arena[pos_y as usize][pos_x as usize] != 0
+                        && arena[pos_y as usize][pos_x as usize] != controlling_id)
                 {
                     return;
                 }
@@ -505,11 +587,11 @@ fn rotate(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState
     }
 
     // go over each row in arena
-    for y in 0..game_state.arena.len() {
+    for y in 0..arena.len() {
         // go over each column in arena
-        for x in 0..game_state.arena[y].len() {
-            if game_state.arena[y][x] == controlling_id {
-                game_state.arena[y][x] = 0;
+        for x in 0..arena[y].len() {
+            if arena[y][x] == controlling_id {
+                arena[y][x] = 0;
             }
         }
     }
@@ -524,81 +606,95 @@ fn rotate(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState
                 let pos_x = center_x as i32 + x;
                 let pos_y = center_y as i32 + y;
 
-                game_state.arena[pos_y as usize][pos_x as usize] = controlling_id;
+                arena[pos_y as usize][pos_x as usize] = controlling_id;
             }
         }
     }
 
+    write_game_state_arena(arena);
+
     // Update the current piece and center
-    game_state.current_piece.layout = matrix;
+    // game_state.current_piece.layout = matrix;
+    let mut current_piece = read_game_state().current_piece.clone();
+    current_piece.layout = matrix;
+    write_game_state_current_piece(current_piece);
 }
 
 fn hold(
-    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
-    game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager>,
 ) {
-    if !game_state.has_held {
-        game_state.has_held = true;
+    if !read_game_state().has_held {
+        write_game_state_has_held(true);
     } else {
         return;
     }
-    let held_piece = game_state.held_piece.clone();
-    let current_piece = game_state.current_piece.clone();
+    let held_piece = read_game_state().held_piece.clone();
+    let current_piece = read_game_state().current_piece.clone();
 
-    for y in 0..game_state.arena.len() {
-        for x in 0..game_state.arena[y].len() {
-            if game_state.arena[y][x] == game_state.controlling {
-                game_state.arena[y][x] = 0;
+    let mut arena = read_game_state().arena.clone();
+    for y in 0..arena.len() {
+        for x in 0..arena[y].len() {
+            if arena[y][x] == read_game_state().controlling {
+                arena[y][x] = 0;
             }
         }
     }
 
     // check if something is held
     if held_piece.layout.len() == 0 {
-        game_state.held_piece = current_piece;
-        game_state.controlling = 0;
+        // game_state.held_piece = current_piece;
+        // game_state.controlling = 0;
+        write_game_state_held_piece(current_piece.clone());
+        write_game_state_controlling(0);
     } else {
         // create a new controlling id for the held piece
-        let random = game_manager.rng.gen::<i32>();
+        let random = read_game_manager().rng.clone().gen::<i32>();
 
         // spawn the held piece
         for (y, row) in held_piece.layout.iter().enumerate() {
             for (x, &val) in row.iter().enumerate() {
-                game_state.arena[y][x + 8] = if val == 1 { random } else { 0 };
+                arena[y][x + 8] = if val == 1 { random } else { 0 };
             }
         }
 
-        game_state.controlling = random;
+        write_game_state_arena(arena);
 
-        game_state.all_pieces.push((random, held_piece.clone()));
-        game_state.current_piece = held_piece.clone();
-        game_state.held_piece = current_piece;
+        // game_state.controlling = random;
+        write_game_state_controlling(random);
 
-        game_state.current_center = (10, 2);
+        write_game_state_all_pieces(vec![(random, held_piece.clone())]);
+        write_game_state_current_piece(held_piece.clone());
+        write_game_state_held_piece(current_piece.clone());
+
+
+        // game_state.current_center = (10, 2);
+        write_game_state_current_center((10, 2));
     }
 }
 
-fn clear_ghost(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
-    for y in 0..game_state.arena.len() {
-        for x in 0..game_state.arena[y].len() {
-            if game_state.arena[y][x] == 2 {
-                game_state.arena[y][x] = 0;
+fn clear_ghost() {
+    let mut arena = read_game_state().arena.clone();
+    for y in 0..arena.len() {
+        for x in 0..arena[y].len() {
+            if arena[y][x] == 2 {
+                arena[y][x] = 0;
             }
         }
     }
+    write_game_state_arena(arena);
 }
 
-fn draw_ghost(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>) {
-    // place -1 where the piece would land if it was dropped, without actually moving it
-    let controlling = game_state.controlling.clone();
-    let arena_backup = game_state.arena.clone();
+fn draw_ghost() {
 
-    while move_down_ghost(game_state) {}
+    let controlling = read_game_state().controlling.clone();
+    let arena_backup = read_game_state().arena.clone();
+    let mut arena = read_game_state().arena.clone();
 
-    for y in 0..game_state.arena.len() {
-        for x in 0..game_state.arena[y].len() {
-            if game_state.arena[y][x] == controlling {
-                game_state.arena[y][x] = 2;
+    while move_down_ghost() {}
+
+    for y in 0..arena.len() {
+        for x in 0..arena[y].len() {
+            if arena[y][x] == controlling {
+                arena[y][x] = 2;
             }
         }
     }
@@ -606,25 +702,27 @@ fn draw_ghost(game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameS
     for y in 0..arena_backup.len() {
         for x in 0..arena_backup[y].len() {
             if arena_backup[y][x] == controlling {
-                game_state.arena[y][x] = controlling;
+                arena[y][x] = controlling;
             }
         }
     }
 
-    game_state.controlling = controlling;
+    write_game_state_arena(arena);
+
+    // game_state.controlling = controlling;
+    write_game_state_controlling(controlling);
 }
 
 fn move_down_ghost(
-    game_state: &mut std::sync::RwLockWriteGuard<'_, game_state::GameState>,
 ) -> bool {
     let mut can_move_down = true;
     // Check if the piece can move down
-    for y in (0..game_state.arena.len()).rev() {
-        for x in 0..game_state.arena[y].len() {
-            if game_state.arena[y][x] == game_state.controlling {
-                if y + 1 >= game_state.arena.len()
-                    || game_state.arena[y + 1][x] != 0
-                        && game_state.arena[y + 1][x] != game_state.controlling
+    for y in (0..read_game_state().arena.len()).rev() {
+        for x in 0..read_game_state().arena[y].len() {
+            if read_game_state().arena[y][x] == read_game_state().controlling {
+                if y + 1 >= read_game_state().arena.len()
+                    || read_game_state().arena[y + 1][x] != 0
+                        && read_game_state().arena[y + 1][x] != read_game_state().controlling
                 {
                     can_move_down = false;
                     break;
@@ -636,18 +734,21 @@ fn move_down_ghost(
         }
     }
 
+    let mut arena = read_game_state().arena.clone();
+
     // If it can move down, move everything that is controlling down
     if can_move_down {
-        for y in (0..game_state.arena.len()).rev() {
-            for x in 0..game_state.arena[y].len() {
-                if game_state.arena[y][x] == game_state.controlling {
-                    if y + 1 < game_state.arena.len() && game_state.arena[y + 1][x] == 0 {
-                        game_state.arena[y + 1][x] = game_state.controlling;
-                        game_state.arena[y][x] = 0;
+        for y in (0..arena.len()).rev() {
+            for x in 0..arena[y].len() {
+                if arena[y][x] == read_game_state().controlling {
+                    if y + 1 < arena.len() && arena[y + 1][x] == 0 {
+                        arena[y + 1][x] = read_game_state().controlling;
+                        arena[y][x] = 0;
                     }
                 }
             }
         }
+        write_game_state_arena(arena);
         return true;
     } else {
         return false;

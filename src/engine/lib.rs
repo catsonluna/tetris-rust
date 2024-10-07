@@ -1,9 +1,12 @@
+
+use crate::engine::managers::game_manager::{self, read_game_manager, write_game_manager_save_data, write_game_manager_should_quit};
+
 use super::{
     events::events::UPDATE_EVENT,
     listeners::lib::register_events,
-    managers::game_manager::{read_game_manager, write_game_manager},
     common::storage,
 };
+use base64::read;
 use lazy_static::lazy_static;
 use std::sync::{Arc, Mutex};
 
@@ -23,6 +26,7 @@ pub fn start() {
     register_events();
 
     let (rl, thread) = raylib::init()
+    //1024×576
         .size(1600, 900)
         .resizable()
         .title("Revris")
@@ -61,13 +65,14 @@ pub fn start() {
         let save_data: crate::engine::managers::game_manager::SaveData =
             ron::de::from_str(&save_data).unwrap();
 
-        write_game_manager().save_data = save_data;
+        write_game_manager_save_data(save_data);
     }
-
     println!("{:#?}", read_game_manager().save_data);
 
+    
+
     while !read_game_manager().should_quit {
-        write_game_manager().should_quit = {
+        let should_quit = {
             let state = RAYLIB_STATE.lock().unwrap();
             if let Some(ref raylib_state) = *state {
                 raylib_state.rl.window_should_close()
@@ -75,6 +80,8 @@ pub fn start() {
                 false
             }
         };
+        
+        write_game_manager_should_quit(read_game_manager().should_quit || should_quit);
 
         UPDATE_EVENT.call();
     }
