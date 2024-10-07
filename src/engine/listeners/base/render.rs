@@ -10,7 +10,11 @@ const BASE_WIDTH: i32 = 1600;
 const BASE_HEIGHT: i32 = 900;
 
 pub fn on_render() {
-    render_main_menu();
+    if !read_game_manager().in_game {
+        render_main_menu();
+    } else {
+        render_game();
+    }
 }
 
 fn get_scaling_factors(d: &RaylibDrawHandle) -> (f32, f32) {
@@ -55,17 +59,8 @@ fn render_main_menu() {
             Color::BLACK,
             Color::BLACK,
             false,
-            "".to_string()
+            "com.catsonluna.revris.button.play".to_string()
         );
-            // let game_manager: &mut std::sync::RwLockWriteGuard<'_, game_manager::GameManager> = &mut write_game_manager();
-            // game_manager.in_game = true;
-            // game_manager.running = true;
-            // game_manager.input_buffer.clear();
-
-            // // play a looping song
-
-            // let mut game_state = write_game_state();
-            // *game_state = GameState::new();
 
 
         ui::button::button(
@@ -114,9 +109,8 @@ fn render_main_menu() {
             Color::BLACK,
             Color::BLACK,
             false,
-            "".to_string()
+            "com.catsonluna.revris.button.quit".to_string()
         );
-            // write_game_manager().should_quit = true;
 
         d.clear_background(Color::from_hex("cfcefc".as_ref()).unwrap());
     }

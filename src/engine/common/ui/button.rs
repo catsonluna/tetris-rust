@@ -28,6 +28,7 @@ pub fn button(
         let text_x = button_x + (width - text_width) / 2;
         let text_y = button_y + (height - text_height) / 2;
         d.draw_text(&text, text_x, text_y, font_size, Color::GRAY);
+        return;
     }
 
     let mouse = d.get_mouse_position();

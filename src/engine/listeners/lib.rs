@@ -2,7 +2,7 @@ use event_listener_primitives::HandlerId;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
 
-use crate::engine::events::events::{BUTTON_EVENT, RENDER_EVENT, TICK_EVENT, UPDATE_EVENT};
+use crate::engine::{events::events::{BUTTON_EVENT, RENDER_EVENT, TICK_EVENT, UPDATE_EVENT}, managers::game_manager::{write_game_manager_in_game, write_game_manager_input_buffer, write_game_manager_running, write_game_manager_should_quit}};
 
 use super::base::{render::on_render, tick::on_tick, update::on_update};
 
@@ -12,7 +12,7 @@ pub fn register_events() {
     register(UPDATE_EVENT.on_event(on_update));
     register(TICK_EVENT.on_event(on_tick));
     register(RENDER_EVENT.on_event(on_render));
-    register(BUTTON_EVENT.on_event(test));
+    register(BUTTON_EVENT.on_event(handle_button));
 }
 
 pub fn register(handler: HandlerId) {
@@ -20,6 +20,21 @@ pub fn register(handler: HandlerId) {
 }
 
 
-pub fn test(test: String) {
-    println!("{}", test);
+pub fn handle_button(test: String) {
+    
+    // create a switch statement to handle the different button events
+    match test.as_str() {
+        "com.catsonluna.revris.button.play" => {
+            write_game_manager_in_game(true);
+            write_game_manager_running(true);
+            write_game_manager_input_buffer(Vec::new());
+        }
+        "com.catsonluna.revris.button.quit" => {
+            write_game_manager_should_quit(true);
+        }
+        _ => {
+            println!("Unknown: {}", test);
+        }
+    }
+
 }

@@ -91,17 +91,19 @@ fn check_spawn(
 
             temp_shpaes.shuffle(&mut rng);
 
-            // append the shuffled shapes to the piece queue
-            // game_state.piece_queue.append(&mut temp_shpaes);
             let mut piece_queue = read_game_state().piece_queue.clone();
             piece_queue.append(&mut temp_shpaes);
             write_game_state_piece_queue(piece_queue);
         }
 
-        // get the first piece in the queue
+
         let shape = read_game_state().piece_queue.clone().remove(0);
 
         write_game_state_current_piece(shape.clone());
+
+        let mut piece_queue = read_game_state().piece_queue.clone();
+        piece_queue.remove(0);
+        write_game_state_piece_queue(piece_queue);
 
         let random = rng.gen::<i32>();
 
@@ -113,14 +115,11 @@ fn check_spawn(
         }
         write_game_state_arena(arena);
 
-        // game_state.current_center = (10, 2);
-        // game_state.controlling = random;
-        // game_state.all_pieces.push((random, shape.clone()));
-        // game_state.has_held = false;
-
         write_game_state_current_center((10, 2));
         write_game_state_controlling(random);
-        write_game_state_all_pieces(vec![(random, shape.clone())]);
+        let mut all_pieces = read_game_state().all_pieces.clone();
+        all_pieces.push((random, shape.clone()));
+        write_game_state_all_pieces(all_pieces);
         write_game_state_has_held(false);
 
     }
@@ -145,7 +144,6 @@ fn check_move(
     }
 
     if read_game_state().right_hold.is_pressed {
-        // read_game_state().right_hold.move_ticks += 1;
         let mut right_hold = read_game_state().right_hold.clone();
         right_hold.move_ticks += 1;
         write_game_state_right_hold(right_hold);
@@ -162,38 +160,32 @@ fn check_move(
     }
 
     if read_game_state().left_hold.is_pressed {
-        // read_game_state().left_hold.move_ticks += 1;
         let mut left_hold = read_game_state().left_hold.clone();
         left_hold.move_ticks += 1;
         write_game_state_left_hold(left_hold);
         if read_game_state().left_hold.move_ticks > 10 {
             move_left();
-            // game_state.left_hold.move_ticks = 9;
             let mut left_hold = read_game_state().left_hold.clone();
             left_hold.move_ticks = 9;
             write_game_state_left_hold(left_hold);
         }
     } else {
-        // game_state.left_hold.move_ticks = 0;
         let mut left_hold = read_game_state().left_hold.clone();
         left_hold.move_ticks = 0;
         write_game_state_left_hold(left_hold);
     }
 
     if read_game_state().down_hold.is_pressed {
-        // read_game_state().down_hold.move_ticks += 1;
         let mut down_hold = read_game_state().down_hold.clone();
         down_hold.move_ticks += 1;
         write_game_state_down_hold(down_hold);
         if read_game_state().down_hold.move_ticks > 10 {
             move_down(true);
-            // game_state.down_hold.move_ticks = 9;
             let mut down_hold = read_game_state().down_hold.clone();
             down_hold.move_ticks = 9;
             write_game_state_down_hold(down_hold);
         }
     } else {
-        // game_state.down_hold.move_ticks = 0;
         let mut down_hold = read_game_state().down_hold.clone();
         down_hold.move_ticks = 0;
         write_game_state_down_hold(down_hold);
@@ -203,33 +195,33 @@ fn check_move(
 fn move_right() {
     let mut can_move = true;
     // go over each row, and get the furthest right value that is 1, then check if it can move right
-    for y in 0..read_game_state().arena.len() {
+    let mut arena = read_game_state().arena.clone();
+    let controlling = read_game_state().controlling.clone();
+    for y in 0..arena.len() {
         let mut furthest_right = None; // Start as None to check if there's a 1
-        for x in (0..read_game_state().arena[y].len()).rev() {
+        for x in (0..arena[y].len()).rev() {
             // Iterate from right to left
-            if read_game_state().arena[y][x] == read_game_state().controlling {
+            if arena[y][x] == controlling {
                 furthest_right = Some(x);
                 break; // We can break here as we're looking for the first (furthest right) 1
             }
         }
         if let Some(x) = furthest_right {
-            if x == read_game_state().arena[y].len() - 1 {
+            if x == arena[y].len() - 1 {
                 can_move = false; // If it's already at the right edge, it can't move right
-            } else if read_game_state().arena[y][x + 1] != 0 {
+            } else if arena[y][x + 1] != 0 {
                 can_move = false; // If the space to the right is not 0, it can't move
             }
         }
     }
 
-    // If it can move right, move everything that is 1 to the right
-    let mut arena = read_game_state().arena.clone();
     if can_move {
         for y in 0..arena.len() {
             for x in (0..arena[y].len()).rev() {
                 // Iterate from right to left
                 if arena[y][x] == read_game_state().controlling {
                     if x < arena[y].len() - 1 && arena[y][x + 1] == 0 {
-                        arena[y][x + 1] = read_game_state().controlling;
+                        arena[y][x + 1] = controlling;
                         arena[y][x] = 0;
 
                     }
@@ -474,21 +466,18 @@ fn process_input_buffer() -> Vec<&'static Action> {
                     let mut left_hold = read_game_state().left_hold.clone();
                     if key_action == &KeyboardAction::Pressed {
                         actions.push(&Action::MoveLeft);
-                        // game_state.left_hold.is_pressed = true;
                         left_hold.is_pressed = true;
                     } else {
-                        // game_state.left_hold.is_pressed = false;
                         left_hold.is_pressed = false;
                     }
+                    write_game_state_left_hold(left_hold);
                 }
                 Action::MoveDown => {
                     let mut down_hold = read_game_state().down_hold.clone();
                     if key_action == &KeyboardAction::Pressed {
                         actions.push(&Action::MoveDown);
-                        // game_state.down_hold.is_pressed = true;
                         down_hold.is_pressed = true;
                     } else {
-                        // game_state.down_hold.is_pressed = false;
                         down_hold.is_pressed = false;
                     }
                     write_game_state_down_hold(down_hold);

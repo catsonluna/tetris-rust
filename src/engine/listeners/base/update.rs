@@ -34,13 +34,10 @@ pub fn do_tick() {
     let delta_time = now.duration_since(read_game_manager().last_update);
     write_game_manager_delta_time(delta_time.as_micros());
 
-    // game_manager.last_update = now;
-    // game_manager.tick_accumulator += delta_time;
     write_game_manager_last_update(now);
     write_game_manager_tick_accumulator(read_game_manager().tick_accumulator + delta_time);
 
     while read_game_manager().tick_accumulator >= Duration::from_millis(tickrate) {
-        // game_manager.tick_accumulator -= Duration::from_millis(tickrate);
         write_game_manager_tick_accumulator(read_game_manager().tick_accumulator - Duration::from_millis(tickrate));
 
         TICK_EVENT.call();
