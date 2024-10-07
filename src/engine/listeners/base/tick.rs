@@ -241,13 +241,15 @@ fn move_right() {
 
 fn move_left() {
     let mut can_move = true;
+    let mut arena = read_game_state().arena.clone();
+    let controlling = read_game_state().controlling.clone();
 
     // Go over each row and get the furthest left value that is 1, then check if it can move left
-    for y in 0..read_game_state().arena.len() {
+    for y in 0..arena.len() {
         let mut furthest_left = None; // Start as None to check if there's a 1
-        for x in 0..read_game_state().arena[y].len() {
+        for x in 0..arena[y].len() {
             // Iterate from left to right
-            if read_game_state().arena[y][x] == read_game_state().controlling {
+            if arena[y][x] == controlling {
                 furthest_left = Some(x);
                 break; // We can break here as we're looking for the first (furthest left) 1
             }
@@ -255,20 +257,19 @@ fn move_left() {
         if let Some(x) = furthest_left {
             if x == 0 {
                 can_move = false; // If it's already at the left edge, it can't move left
-            } else if read_game_state().arena[y][x - 1] != 0 {
+            } else if arena[y][x - 1] != 0 {
                 can_move = false; // If the space to the left is not 0, it can't move
             }
         }
     }
-    let mut arena = read_game_state().arena.clone();
     // If it can move left, move everything that is 1 to the left
     if can_move {
         for y in 0..arena.len() {
             for x in 0..arena[y].len() {
                 // Iterate from left to right
-                if arena[y][x] == read_game_state().controlling {
+                if arena[y][x] == controlling {
                     if x > 0 && arena[y][x - 1] == 0 {
-                        arena[y][x - 1] = read_game_state().controlling;
+                        arena[y][x - 1] = controlling;
                         arena[y][x] = 0;
                     }
                 }
@@ -628,14 +629,14 @@ fn hold(
         }
     }
 
+    write_game_state_arena(arena);
+    let mut arena = read_game_state().arena.clone();
+
     // check if something is held
     if held_piece.layout.len() == 0 {
-        // game_state.held_piece = current_piece;
-        // game_state.controlling = 0;
         write_game_state_held_piece(current_piece.clone());
         write_game_state_controlling(0);
     } else {
-        // create a new controlling id for the held piece
         let random = read_game_manager().rng.clone().gen::<i32>();
 
         // spawn the held piece
@@ -650,7 +651,9 @@ fn hold(
         // game_state.controlling = random;
         write_game_state_controlling(random);
 
-        write_game_state_all_pieces(vec![(random, held_piece.clone())]);
+        let mut all_pieces = read_game_state().all_pieces.clone();
+        all_pieces.push((random, held_piece.clone()));
+        write_game_state_all_pieces(all_pieces);
         write_game_state_current_piece(held_piece.clone());
         write_game_state_held_piece(current_piece.clone());
 
@@ -676,9 +679,10 @@ fn draw_ghost() {
 
     let controlling = read_game_state().controlling.clone();
     let arena_backup = read_game_state().arena.clone();
-    let mut arena = read_game_state().arena.clone();
 
     while move_down_ghost() {}
+
+    let mut arena = read_game_state().arena.clone();
 
     for y in 0..arena.len() {
         for x in 0..arena[y].len() {
@@ -697,21 +701,20 @@ fn draw_ghost() {
     }
 
     write_game_state_arena(arena);
-
-    // game_state.controlling = controlling;
     write_game_state_controlling(controlling);
 }
 
 fn move_down_ghost(
 ) -> bool {
     let mut can_move_down = true;
-    // Check if the piece can move down
-    for y in (0..read_game_state().arena.len()).rev() {
-        for x in 0..read_game_state().arena[y].len() {
-            if read_game_state().arena[y][x] == read_game_state().controlling {
-                if y + 1 >= read_game_state().arena.len()
-                    || read_game_state().arena[y + 1][x] != 0
-                        && read_game_state().arena[y + 1][x] != read_game_state().controlling
+    let mut arena = read_game_state().arena.clone();
+    let controlling = read_game_state().controlling.clone();
+    for y in (0..arena.len()).rev() {
+        for x in 0..arena[y].len() {
+            if arena[y][x] == controlling {
+                if y + 1 >= arena.len()
+                    || arena[y + 1][x] != 0
+                        && arena[y + 1][x] != controlling
                 {
                     can_move_down = false;
                     break;
@@ -723,15 +726,13 @@ fn move_down_ghost(
         }
     }
 
-    let mut arena = read_game_state().arena.clone();
-
     // If it can move down, move everything that is controlling down
     if can_move_down {
         for y in (0..arena.len()).rev() {
             for x in 0..arena[y].len() {
-                if arena[y][x] == read_game_state().controlling {
+                if arena[y][x] == controlling {
                     if y + 1 < arena.len() && arena[y + 1][x] == 0 {
-                        arena[y + 1][x] = read_game_state().controlling;
+                        arena[y + 1][x] = controlling;
                         arena[y][x] = 0;
                     }
                 }
