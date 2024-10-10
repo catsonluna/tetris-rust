@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::{Duration, Instant}};
+use std::time::{Duration, Instant};
 
 use raylib::ffi::KeyboardKey;
 

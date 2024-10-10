@@ -2,7 +2,7 @@ use raylib::prelude::*;
 
 use crate::engine::common::ui;
 use crate::engine::lib::RAYLIB_STATE;
-use crate::engine::managers::game_manager::{self, read_game_manager};
+use crate::engine::managers::game_manager::read_game_manager;
 use crate::engine::managers::game_state::read_game_state;
 
 // Base resolution as reference

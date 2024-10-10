@@ -50,6 +50,7 @@ impl Clone for SaveData {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GameData {
+    pub id: i32,
     pub score: i32,
     pub level: i32,
     pub lines_cleared: i32,
@@ -60,6 +61,7 @@ pub struct GameData {
 impl GameData {
     pub fn new() -> Self {
         Self {
+            id: 0,
             score: 0,
             level: 1,
             lines_cleared: 0,
@@ -73,6 +75,7 @@ impl GameData {
 impl Clone for GameData {
     fn clone(&self) -> Self {
         Self {
+            id: self.id,
             score: self.score,
             level: self.level,
             lines_cleared: self.lines_cleared,

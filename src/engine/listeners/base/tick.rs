@@ -423,7 +423,7 @@ fn destoy_lines() {
         write_game_state_game_data(game_data);
 
         // read_game_state().lines_till_next_level -= despawned as i32;
-        let mut lines_till_next_level = read_game_state().lines_till_next_level - despawned as i32;
+        let lines_till_next_level = read_game_state().lines_till_next_level - despawned as i32;
         write_game_state_lines_till_next_level(lines_till_next_level);
         if read_game_state().lines_till_next_level <= 0 {
             // game_state.game_data.level += 1;
