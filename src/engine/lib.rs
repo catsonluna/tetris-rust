@@ -25,7 +25,6 @@ pub fn start() {
     register_events();
 
     let (rl, thread) = raylib::init()
-    //1024×576
         .size(1600, 900)
         .resizable()
         .title("Revris")
