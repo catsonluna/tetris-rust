@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use rand::{seq::SliceRandom, Rng};
 
-use crate::engine::{common::storage, managers::{
+use crate::engine::{common::storage, events::events::END_GAME_EVENT, managers::{
     game_manager::{read_game_manager, write_game_manager_input_buffer, write_game_manager_running, write_game_manager_save_data, KeyboardAction}, game_state::{read_game_state, write_game_state_all_pieces, write_game_state_arena, write_game_state_controlling, write_game_state_current_center, write_game_state_current_piece, write_game_state_down_hold, write_game_state_drop_ticks, write_game_state_game_data, write_game_state_game_over, write_game_state_ground_ticks, write_game_state_has_held, write_game_state_held_piece, write_game_state_left_hold, write_game_state_lines_till_next_level, write_game_state_piece_queue, write_game_state_right_hold},
 }};
 use raylib::prelude::*;
@@ -355,30 +355,7 @@ fn check_game_over() {
     for y in 0..5 {
         for x in 0..arena[y].len() {
             if arena[y][x] != 0 && arena[y][x] != read_game_state().controlling {
-                // game_state.game_over = true;
-                write_game_state_game_over(true);
-
-                // set the end time
-                // game_state.game_data.end_time = chrono::offset::Utc::now();
-                let mut game_data = read_game_state().game_data.clone();
-                game_data.end_time = chrono::offset::Utc::now();
-                write_game_state_game_data(game_data);
-
-                // add the game to history
-                // game_manager.save_data.history.push(game_state.game_data.clone());
-
-                // if the score is higher, set this as the best game
-                if read_game_state().game_data.score > read_game_manager().save_data.best_game.score {
-                    // game_manager.save_data.best_game = game_state.game_data.clone();
-                    let mut save_data = read_game_manager().save_data.clone();
-                    save_data.best_game = read_game_state().game_data.clone();
-                    write_game_manager_save_data(save_data);
-                }
-
-                // save the game data
-                let serialized_save_data = ron::ser::to_string(&read_game_manager().save_data).unwrap();
-                storage::lib::save("save.rvrs", &serialized_save_data);
-
+                END_GAME_EVENT.call();
                 break;
             }
         }
