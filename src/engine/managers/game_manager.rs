@@ -144,7 +144,7 @@ pub struct GameManager {
 impl GameManager {
     pub fn new() -> Self {
         Self {
-            screen: "asfsf".to_string(),
+            screen: "main".to_string(),
             screen_path: vec![],
             rng: rand::thread_rng(),
             last_update: Instant::now(),
