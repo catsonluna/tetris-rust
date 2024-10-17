@@ -10,7 +10,7 @@ use crate::engine::{
     managers::{
         game_manager::{
             read_game_manager, write_game_manager_in_game, write_game_manager_input_buffer,
-            write_game_manager_running, write_game_manager_save_data,
+            write_game_manager_running, write_game_manager_save_data, write_game_manager_screen,
             write_game_manager_should_quit, GameData,
         },
         game_state::{
@@ -21,7 +21,7 @@ use crate::engine::{
     },
 };
 
-use super::base::{render::on_render, tick::on_tick, update::on_update};
+use super::base::{render::render::on_render, tick::on_tick, update::on_update};
 
 static EVENT_HANDLES: Lazy<Mutex<Vec<HandlerId>>> = Lazy::new(|| Mutex::new(Vec::new()));
 
@@ -37,6 +37,7 @@ pub fn register_events() {
         write_game_state(game_state);
         write_game_manager_in_game(true);
         write_game_manager_running(true);
+        write_game_manager_screen("game".to_string());
     }));
 
     register(END_GAME_EVENT.on_event(|| {
@@ -102,6 +103,7 @@ pub fn handle_button(test: String) {
             END_GAME_EVENT.call();
             write_game_manager_running(false);
             write_game_manager_in_game(false);
+            write_game_manager_screen("main".to_string());
         }
         _ => {
             println!("Unknown: {}", test);

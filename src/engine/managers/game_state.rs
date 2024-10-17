@@ -68,6 +68,7 @@ impl GameState {
                 can_rotate: false,
                 color: Color::WHITE,
                 name: "".to_string(),
+                active: false,
             },
             current_center: (0, 0),
             held_piece: Block {
@@ -75,6 +76,7 @@ impl GameState {
                 can_rotate: false,
                 color: Color::WHITE,
                 name: "".to_string(),
+                active: false,
             },
             has_held: false,
             all_pieces: vec![],

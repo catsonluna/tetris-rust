@@ -22,6 +22,7 @@ pub struct Block {
     pub can_rotate: bool,
     pub color: Color,
     pub name: String,
+    pub active: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -94,6 +95,7 @@ impl Clone for Block {
             can_rotate: self.can_rotate,
             color: self.color,
             name: self.name.clone(),
+            active: self.active,
         }
     }
 }
@@ -134,11 +136,16 @@ pub struct GameManager {
     pub app_start_time: Instant,
 
     pub save_data: SaveData,
+
+    pub screen: String,
+    pub screen_path: Vec<String>,
 }
 
 impl GameManager {
     pub fn new() -> Self {
         Self {
+            screen: "asfsf".to_string(),
+            screen_path: vec![],
             rng: rand::thread_rng(),
             last_update: Instant::now(),
             tick_accumulator: Duration::from_secs(0),
@@ -159,6 +166,7 @@ impl GameManager {
                     can_rotate: false,
                     color: Color::FIREBRICK,
                     name: "Small Block".to_string(),
+                    active: true,
                 },
                 Block {
                     layout: vec![
@@ -171,6 +179,7 @@ impl GameManager {
                     can_rotate: false,
                     color: Color::RED,
                     name: "Medium Block".to_string(),
+                    active: true,
                 },
                 Block {
                     layout: vec![
@@ -183,6 +192,7 @@ impl GameManager {
                     can_rotate: true,
                     color: Color::BLUE,
                     name: "Small T".to_string(),
+                    active: true,
                 },
                 Block {
                     layout: vec![
@@ -195,6 +205,7 @@ impl GameManager {
                     can_rotate: true,
                     color: Color::DARKBLUE,
                     name: "BIG T".to_string(),
+                    active: true,
                 },
                 Block {
                     layout: vec![
@@ -207,6 +218,7 @@ impl GameManager {
                     can_rotate: true,
                     color: Color::GREEN,
                     name: "L".to_string(),
+                    active: true,
                 },
                 Block {
                     name: "J".to_string(),
@@ -219,6 +231,7 @@ impl GameManager {
                     ],
                     can_rotate: true,
                     color: Color::DARKGREEN,
+                    active: true,
                 },
                 Block {
                     layout: vec![
@@ -231,6 +244,7 @@ impl GameManager {
                     can_rotate: true,
                     color: Color::GREEN,
                     name: "Small L".to_string(),
+                    active: true,
                 },
                 Block {
                     name: "Small J".to_string(),
@@ -243,6 +257,7 @@ impl GameManager {
                     ],
                     can_rotate: true,
                     color: Color::DARKGREEN,
+                    active: true,
                 },
                 Block {
                     name: "I".to_string(),
@@ -255,6 +270,7 @@ impl GameManager {
                     ],
                     can_rotate: true,
                     color: Color::DARKGREEN,
+                    active: true,
                 },
                 Block {
                     name: "Pyramid".to_string(),
@@ -267,6 +283,7 @@ impl GameManager {
                     ],
                     can_rotate: true,
                     color: Color::PURPLE,
+                    active: true,
                 },
             ],
             app_start_time: Instant::now(),
@@ -281,6 +298,8 @@ unsafe impl Sync for GameManager {}
 impl Clone for GameManager {
     fn clone(&self) -> Self {
         GameManager {
+            screen: self.screen.clone(),
+            screen_path: self.screen_path.clone(),
             rng: rand::thread_rng(), // The RNG can't be cloned directly; reinitialize
             last_update: self.last_update,
             tick_accumulator: self.tick_accumulator,
@@ -370,5 +389,17 @@ pub fn write_game_manager_delta_time(delta_time: u128) {
 pub fn write_game_manager_app_start_time(app_start_time: Instant) {
     let mut game_manager = read_game_manager_only();
     game_manager.app_start_time = app_start_time;
+    GAME_MANAGER.store(Arc::new(game_manager));
+}
+
+pub fn write_game_manager_screen(screen: String) {
+    let mut game_manager = read_game_manager_only();
+    game_manager.screen = screen;
+    GAME_MANAGER.store(Arc::new(game_manager));
+}
+
+pub fn write_game_manager_screen_path(screen_path: Vec<String>) {
+    let mut game_manager = read_game_manager_only();
+    game_manager.screen_path = screen_path;
     GAME_MANAGER.store(Arc::new(game_manager));
 }
