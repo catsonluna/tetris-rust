@@ -1,8 +1,8 @@
+use super::game_manager::{Block, GameData};
 use arc_swap::ArcSwap;
+use lazy_static::lazy_static;
 use raylib::color::Color;
 use std::sync::Arc;
-use super::game_manager::{Block, GameData};
-use lazy_static::lazy_static;
 
 pub struct GameState {
     pub controlling: i32,
@@ -117,9 +117,7 @@ impl Clone for ActionManager {
             move_ticks: self.move_ticks,
         }
     }
-    
 }
-
 
 lazy_static! {
     static ref GAME_MANAGER: ArcSwap<GameState> = ArcSwap::new(Arc::new(GameState::new()));
@@ -238,5 +236,3 @@ pub fn write_game_state_piece_queue(piece_queue: Vec<Block>) {
     game_manager.piece_queue = piece_queue;
     write_game_state(game_manager);
 }
-
-

@@ -1,5 +1,5 @@
-use raylib::prelude::*;
 use crate::engine::events::events::BUTTON_EVENT;
+use raylib::prelude::*;
 
 pub fn button(
     d: &mut RaylibDrawHandle,
@@ -14,7 +14,7 @@ pub fn button(
     font_color: Color,
     hover_font_color: Color,
     disabled: bool,
-    event: String
+    event: String,
 ) {
     let button_x = x - width / 2;
     let button_y = y - height / 2;

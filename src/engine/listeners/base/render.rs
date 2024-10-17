@@ -59,9 +59,8 @@ fn render_main_menu() {
             Color::BLACK,
             Color::BLACK,
             false,
-            "com.catsonluna.revris.button.play".to_string()
+            "com.catsonluna.revris.button.play".to_string(),
         );
-
 
         ui::button::button(
             &mut d,
@@ -76,7 +75,7 @@ fn render_main_menu() {
             Color::BLACK,
             Color::BLACK,
             true,
-            "".to_string()
+            "".to_string(),
         );
 
         // disabled settings button
@@ -93,7 +92,7 @@ fn render_main_menu() {
             Color::BLACK,
             Color::BLACK,
             true,
-            "".to_string()
+            "".to_string(),
         );
 
         ui::button::button(
@@ -109,7 +108,7 @@ fn render_main_menu() {
             Color::BLACK,
             Color::BLACK,
             false,
-            "com.catsonluna.revris.button.quit".to_string()
+            "com.catsonluna.revris.button.quit".to_string(),
         );
 
         d.clear_background(Color::from_hex("cfcefc".as_ref()).unwrap());
@@ -436,7 +435,7 @@ fn render_pause_menu(d: &mut RaylibDrawHandle, scale_x: f32, scale_y: f32) {
         Color::BLACK,
         Color::BLACK,
         false,
-        "com.catsonluna.revris.button.resume".to_string()
+        "com.catsonluna.revris.button.resume".to_string(),
     );
 
     // if d.gui_button(
@@ -466,7 +465,7 @@ fn render_pause_menu(d: &mut RaylibDrawHandle, scale_x: f32, scale_y: f32) {
         Color::BLACK,
         Color::BLACK,
         false,
-        "com.catsonluna.revris.button.main_menu".to_string()
+        "com.catsonluna.revris.button.main_menu".to_string(),
     );
 
     ui::button::button(
@@ -482,6 +481,6 @@ fn render_pause_menu(d: &mut RaylibDrawHandle, scale_x: f32, scale_y: f32) {
         Color::BLACK,
         Color::BLACK,
         false,
-        "com.catsonluna.revris.button.quit".to_string()
+        "com.catsonluna.revris.button.quit".to_string(),
     );
 }

@@ -6,7 +6,10 @@ use crate::engine::{
     events::events::{RENDER_EVENT, TICK_EVENT},
     lib::RAYLIB_STATE,
     managers::{
-        game_manager::{read_game_manager, write_game_manager_delta_time, write_game_manager_input_buffer, write_game_manager_last_update, write_game_manager_tick_accumulator, KeyboardAction},
+        game_manager::{
+            read_game_manager, write_game_manager_delta_time, write_game_manager_input_buffer,
+            write_game_manager_last_update, write_game_manager_tick_accumulator, KeyboardAction,
+        },
         game_statics::read_game_statics,
     },
 };
@@ -38,7 +41,9 @@ pub fn do_tick() {
     write_game_manager_tick_accumulator(read_game_manager().tick_accumulator + delta_time);
 
     while read_game_manager().tick_accumulator >= Duration::from_millis(tickrate) {
-        write_game_manager_tick_accumulator(read_game_manager().tick_accumulator - Duration::from_millis(tickrate));
+        write_game_manager_tick_accumulator(
+            read_game_manager().tick_accumulator - Duration::from_millis(tickrate),
+        );
 
         TICK_EVENT.call();
     }
@@ -52,7 +57,6 @@ pub fn updated_input_buffer() {
                 let mut input_buffer = read_game_manager().input_buffer.clone();
                 if raylib_state.rl.is_key_pressed(*key) {
                     input_buffer.push((*key, KeyboardAction::Pressed));
-
                 } else if raylib_state.rl.is_key_released(*key) {
                     input_buffer.push((*key, KeyboardAction::Released));
                 }

@@ -26,7 +26,6 @@ pub fn save(path: &str, data: &str) {
     std::fs::write(path, data).unwrap();
 }
 
-
 pub fn delete(path: &str) {
     let path = format!("{}/{}", get_app_data_dir(), path);
     if std::path::Path::new(&path).exists() {

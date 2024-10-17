@@ -1,11 +1,8 @@
-
-use crate::engine::managers::game_manager::{read_game_manager, write_game_manager_save_data, write_game_manager_should_quit};
-
-use super::{
-    events::events::UPDATE_EVENT,
-    listeners::lib::register_events,
-    common::storage,
+use crate::engine::managers::game_manager::{
+    read_game_manager, write_game_manager_save_data, write_game_manager_should_quit,
 };
+
+use super::{common::storage, events::events::UPDATE_EVENT, listeners::lib::register_events};
 use lazy_static::lazy_static;
 use std::sync::{Arc, Mutex};
 
@@ -59,15 +56,12 @@ pub fn start() {
         // Save the serialized data
         storage::lib::save("save.rvrs", &serialized_save_data);
     } else {
-
         let save_data: crate::engine::managers::game_manager::SaveData =
             ron::de::from_str(&save_data).unwrap();
 
         write_game_manager_save_data(save_data);
     }
     println!("{:#?}", read_game_manager().save_data);
-
-    
 
     while !read_game_manager().should_quit {
         let should_quit = {
@@ -78,7 +72,7 @@ pub fn start() {
                 false
             }
         };
-        
+
         write_game_manager_should_quit(read_game_manager().should_quit || should_quit);
 
         UPDATE_EVENT.call();

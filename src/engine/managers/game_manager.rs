@@ -3,7 +3,11 @@ use chrono::{DateTime, Utc};
 use lazy_static::lazy_static;
 
 use raylib::{color::Color, ffi::KeyboardKey};
-use std::{ fmt::Debug, sync::Arc, time::{Duration, Instant}};
+use std::{
+    fmt::Debug,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -19,7 +23,6 @@ pub struct Block {
     pub color: Color,
     pub name: String,
 }
-
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SaveData {
@@ -69,7 +72,6 @@ impl GameData {
             end_time: Utc::now(),
         }
     }
-    
 }
 
 impl Clone for GameData {
@@ -112,7 +114,6 @@ impl Clone for KeyboardAction {
             KeyboardAction::Released => KeyboardAction::Released,
         }
     }
-
 }
 
 pub struct GameManager {
@@ -295,7 +296,6 @@ impl Clone for GameManager {
     }
 }
 
-
 lazy_static! {
     static ref GAME_MANAGER: ArcSwap<GameManager> = ArcSwap::new(Arc::new(GameManager::new()));
 }
@@ -307,7 +307,6 @@ pub fn read_game_manager() -> Arc<GameManager> {
 pub fn read_game_manager_only() -> GameManager {
     (**GAME_MANAGER.load()).clone()
 }
-
 
 pub fn write_game_manager(game_manager: GameManager) {
     GAME_MANAGER.store(Arc::new(game_manager));

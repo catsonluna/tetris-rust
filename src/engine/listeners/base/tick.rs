@@ -2,9 +2,25 @@ use std::fmt::Debug;
 
 use rand::{seq::SliceRandom, Rng};
 
-use crate::engine::{common::storage, events::events::END_GAME_EVENT, managers::{
-    game_manager::{read_game_manager, write_game_manager_input_buffer, write_game_manager_running, write_game_manager_save_data, KeyboardAction}, game_state::{read_game_state, write_game_state_all_pieces, write_game_state_arena, write_game_state_controlling, write_game_state_current_center, write_game_state_current_piece, write_game_state_down_hold, write_game_state_drop_ticks, write_game_state_game_data, write_game_state_game_over, write_game_state_ground_ticks, write_game_state_has_held, write_game_state_held_piece, write_game_state_left_hold, write_game_state_lines_till_next_level, write_game_state_piece_queue, write_game_state_right_hold},
-}};
+use crate::engine::{
+    common::storage,
+    events::events::END_GAME_EVENT,
+    managers::{
+        game_manager::{
+            read_game_manager, write_game_manager_input_buffer, write_game_manager_running,
+            write_game_manager_save_data, KeyboardAction,
+        },
+        game_state::{
+            read_game_state, write_game_state_all_pieces, write_game_state_arena,
+            write_game_state_controlling, write_game_state_current_center,
+            write_game_state_current_piece, write_game_state_down_hold,
+            write_game_state_drop_ticks, write_game_state_game_data, write_game_state_game_over,
+            write_game_state_ground_ticks, write_game_state_has_held, write_game_state_held_piece,
+            write_game_state_left_hold, write_game_state_lines_till_next_level,
+            write_game_state_piece_queue, write_game_state_right_hold,
+        },
+    },
+};
 use raylib::prelude::*;
 
 #[derive(PartialEq)] // Add the PartialEq trait
@@ -34,7 +50,6 @@ impl Debug for Action {
 
 pub fn on_tick() {
     // println!("Tick");
-
 
     if !read_game_manager().in_game {
         return;
@@ -70,15 +85,13 @@ pub fn on_tick() {
 }
 
 fn should_respawn() {
-
     if read_game_state().ground_ticks > 48 {
         write_game_state_ground_ticks(0);
         write_game_state_controlling(0);
     }
 }
 
-fn check_spawn(
-) {
+fn check_spawn() {
     if read_game_state().controlling == 0 {
         let mut rng = read_game_manager().rng.clone();
 
@@ -95,7 +108,6 @@ fn check_spawn(
             piece_queue.append(&mut temp_shpaes);
             write_game_state_piece_queue(piece_queue);
         }
-
 
         let shape = read_game_state().piece_queue.clone().remove(0);
 
@@ -121,12 +133,10 @@ fn check_spawn(
         all_pieces.push((random, shape.clone()));
         write_game_state_all_pieces(all_pieces);
         write_game_state_has_held(false);
-
     }
 }
 
-fn check_move(
-) {
+fn check_move() {
     let actions = process_input_buffer();
 
     for action in actions {
@@ -223,7 +233,6 @@ fn move_right() {
                     if x < arena[y].len() - 1 && arena[y][x + 1] == 0 {
                         arena[y][x + 1] = controlling;
                         arena[y][x] = 0;
-
                     }
                 }
             }
@@ -235,7 +244,6 @@ fn move_right() {
         // game_state.current_center.0 += 1;
         let current_center = read_game_state().current_center.clone();
         write_game_state_current_center((current_center.0 + 1, current_center.1));
-
     }
 }
 
@@ -283,9 +291,7 @@ fn move_left() {
     }
 }
 
-fn move_down(
-    forced: bool,
-) -> bool {
+fn move_down(forced: bool) -> bool {
     let mut can_move_down = true;
 
     if read_game_state().drop_ticks > 0.0 && !forced {
@@ -409,12 +415,16 @@ fn destoy_lines() {
             write_game_state_game_data(game_data);
             if read_game_state().game_data.level < 13 {
                 // game_state.drop_speed = 1.0 + (game_state.game_data.level as f32 * 0.75) / 2f32;
-                write_game_state_drop_ticks(1.0 + (read_game_state().game_data.level as f32 * 0.75) / 2f32);
+                write_game_state_drop_ticks(
+                    1.0 + (read_game_state().game_data.level as f32 * 0.75) / 2f32,
+                );
             }
             // game_state.lines_till_next_level = 5 + (game_state.game_data.level as f32 * 1.2) as i32;
-            write_game_state_lines_till_next_level(5 + (read_game_state().game_data.level as f32 * 1.2) as i32);
+            write_game_state_lines_till_next_level(
+                5 + (read_game_state().game_data.level as f32 * 1.2) as i32,
+            );
         }
-        
+
         // game_state.game_data.lines_cleared += despawned as i32;
         let mut game_data = read_game_state().game_data.clone();
         game_data.lines_cleared += despawned as i32;
@@ -507,11 +517,7 @@ fn rotate() {
     let mut matrix = read_game_state().current_piece.layout.clone();
 
     let binding = read_game_state().clone();
-    let block = match binding
-        .all_pieces
-        .iter()
-        .find(|&p| p.0 == controlling_id)
-    {
+    let block = match binding.all_pieces.iter().find(|&p| p.0 == controlling_id) {
         Some(piece) => &piece.1,
         None => return,
     };
@@ -587,8 +593,7 @@ fn rotate() {
     write_game_state_current_piece(current_piece);
 }
 
-fn hold(
-) {
+fn hold() {
     if !read_game_state().has_held {
         write_game_state_has_held(true);
     } else {
@@ -634,7 +639,6 @@ fn hold(
         write_game_state_current_piece(held_piece.clone());
         write_game_state_held_piece(current_piece.clone());
 
-
         // game_state.current_center = (10, 2);
         write_game_state_current_center((10, 2));
     }
@@ -653,7 +657,6 @@ fn clear_ghost() {
 }
 
 fn draw_ghost() {
-
     let controlling = read_game_state().controlling.clone();
     let arena_backup = read_game_state().arena.clone();
 
@@ -681,18 +684,14 @@ fn draw_ghost() {
     write_game_state_controlling(controlling);
 }
 
-fn move_down_ghost(
-) -> bool {
+fn move_down_ghost() -> bool {
     let mut can_move_down = true;
     let mut arena = read_game_state().arena.clone();
     let controlling = read_game_state().controlling.clone();
     for y in (0..arena.len()).rev() {
         for x in 0..arena[y].len() {
             if arena[y][x] == controlling {
-                if y + 1 >= arena.len()
-                    || arena[y + 1][x] != 0
-                        && arena[y + 1][x] != controlling
-                {
+                if y + 1 >= arena.len() || arena[y + 1][x] != 0 && arena[y + 1][x] != controlling {
                     can_move_down = false;
                     break;
                 }
