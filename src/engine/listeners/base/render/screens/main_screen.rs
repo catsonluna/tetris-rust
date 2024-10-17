@@ -17,7 +17,7 @@ pub fn render_main_menu() {
             scaled_value(800, scale_x),
             scaled_value(116, scale_y),
             Color::BLACK,
-            "Tetris".to_string(),
+            "Revris".to_string(),
             scaled_value(100, scale_y),
         );
 

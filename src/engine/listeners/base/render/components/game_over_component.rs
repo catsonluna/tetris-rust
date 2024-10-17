@@ -1,33 +1,19 @@
 use raylib::{
     color::Color,
-    prelude::{RaylibDraw, RaylibDrawHandle},
+    prelude::RaylibDrawHandle,
 };
 
 use crate::engine::{common::ui, listeners::base::render::render::scaled_value};
 
 pub fn render_game_over(d: &mut RaylibDrawHandle, scale_x: f32, scale_y: f32) {
-    d.draw_rectangle(
-        scaled_value(400, scale_x),
-        scaled_value(256, scale_y),
+    ui::rectangle::rectangle(d, 
+        scaled_value(480, scale_x),
+        scaled_value(335, scale_y),
         scaled_value(160, scale_x),
         scaled_value(160, scale_y),
         Color::WHITE,
-    );
-    d.draw_rectangle_lines(
-        scaled_value(400, scale_x),
-        scaled_value(256, scale_y),
-        scaled_value(160, scale_x),
-        scaled_value(160, scale_y),
         Color::BLACK,
     );
-
-    // d.draw_text(
-    //     "Game Over",
-    //     scaled_value(410, scale_x),
-    //     scaled_value(266, scale_y),
-    //     scaled_value(20, scale_y),
-    //     Color::BLACK,
-    // );
 
     ui::text::text(
         d,

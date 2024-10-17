@@ -1,26 +1,20 @@
 use raylib::{
     color::Color,
-    prelude::{RaylibDraw, RaylibDrawHandle},
+    prelude::RaylibDrawHandle,
 };
 
 use crate::engine::{common::ui, listeners::base::render::render::scaled_value};
 
 pub fn render_pause_menu(d: &mut RaylibDrawHandle, scale_x: f32, scale_y: f32) {
-    // Example for Pause Menu screen scaling
-    d.draw_rectangle(
-        scaled_value(400, scale_x),
-        scaled_value(256, scale_y),
+    ui::rectangle::rectangle(d, 
+        scaled_value(480, scale_x),
+        scaled_value(335, scale_y),
         scaled_value(160, scale_x),
         scaled_value(160, scale_y),
         Color::WHITE,
-    );
-    d.draw_rectangle_lines(
-        scaled_value(400, scale_x),
-        scaled_value(256, scale_y),
-        scaled_value(160, scale_x),
-        scaled_value(160, scale_y),
         Color::BLACK,
     );
+
 
     ui::text::text(
         d,
