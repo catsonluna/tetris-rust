@@ -35,14 +35,12 @@ impl Block {
             active: false,
         }
     }
-    
 }
 
 impl Default for Block {
     fn default() -> Self {
         Self::new()
     }
-    
 }
 
 #[derive(Serialize, Deserialize, Debug)]

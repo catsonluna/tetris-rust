@@ -9,14 +9,13 @@ use crate::engine::{
     },
     managers::{
         game_manager::{
-            read_game_manager, write_game_manager_in_game, 
-            write_game_manager_running, write_game_manager_save_data, write_game_manager_screen,
+            read_game_manager, write_game_manager_in_game, write_game_manager_running,
+            write_game_manager_save_data, write_game_manager_screen,
             write_game_manager_should_quit,
         },
         game_state::{
-            read_game_state, write_game_state,
-            write_game_state_game_data, write_game_state_game_over,
-            GameState,
+            read_game_state, write_game_state, write_game_state_game_data,
+            write_game_state_game_over, GameState,
         },
     },
 };

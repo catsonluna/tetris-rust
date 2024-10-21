@@ -1,6 +1,5 @@
 use raylib::prelude::{RaylibDraw, RaylibDrawHandle};
 
-
 pub fn rectangle(
     d: &mut RaylibDrawHandle,
     x: i32,

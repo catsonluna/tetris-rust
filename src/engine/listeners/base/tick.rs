@@ -7,16 +7,16 @@ use crate::engine::{
     managers::{
         game_manager::{
             read_game_manager, write_game_manager_input_buffer, write_game_manager_running,
-             KeyboardAction,
+            KeyboardAction,
         },
         game_state::{
             read_game_state, write_game_state_all_pieces, write_game_state_arena,
             write_game_state_controlling, write_game_state_current_center,
             write_game_state_current_piece, write_game_state_down_hold,
-            write_game_state_drop_ticks, write_game_state_game_data,
-            write_game_state_ground_ticks, write_game_state_has_held, write_game_state_held_piece,
-            write_game_state_left_hold, write_game_state_lines_till_next_level,
-            write_game_state_piece_queue, write_game_state_right_hold,
+            write_game_state_drop_ticks, write_game_state_game_data, write_game_state_ground_ticks,
+            write_game_state_has_held, write_game_state_held_piece, write_game_state_left_hold,
+            write_game_state_lines_till_next_level, write_game_state_piece_queue,
+            write_game_state_right_hold,
         },
     },
 };
@@ -813,7 +813,10 @@ fn move_down_ghost() -> bool {
 
 #[cfg(test)]
 mod test {
-    use crate::engine::managers::{game_manager::Block, game_state::{write_game_state, GameState}};
+    use crate::engine::managers::{
+        game_manager::Block,
+        game_state::{write_game_state, GameState},
+    };
 
     use super::*;
 
@@ -841,7 +844,6 @@ mod test {
             },
             ..Default::default()
         }
-
     }
 
     #[test]
@@ -860,7 +862,6 @@ mod test {
         let game_state = create_game_state();
         write_game_state(game_state);
         while move_down(true) {}
-
 
         let moved = move_down(true);
         assert_eq!(moved, false);

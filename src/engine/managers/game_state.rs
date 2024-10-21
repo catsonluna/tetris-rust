@@ -33,7 +33,7 @@ pub struct GameState {
 impl Default for GameState {
     fn default() -> Self {
         Self::new()
-    }   
+    }
 }
 #[derive(Debug)]
 pub struct ActionManager {

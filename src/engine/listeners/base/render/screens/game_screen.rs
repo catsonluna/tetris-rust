@@ -1,8 +1,4 @@
-use raylib::{
-    color::Color,
-    math::rrect,
-    prelude::RaylibDraw,
-};
+use raylib::{color::Color, math::rrect, prelude::RaylibDraw};
 
 use crate::engine::{
     common::ui,

@@ -22,7 +22,7 @@ static USED_KEYS: [KeyboardKey; 8] = [
     KeyboardKey::KEY_UP,
     KeyboardKey::KEY_LEFT_SHIFT,
     KeyboardKey::KEY_ESCAPE,
-    KeyboardKey::KEY_Z
+    KeyboardKey::KEY_Z,
 ];
 
 pub fn on_update() {

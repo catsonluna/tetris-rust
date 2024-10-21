@@ -1,12 +1,10 @@
-use raylib::{
-    color::Color,
-    prelude::RaylibDrawHandle,
-};
+use raylib::{color::Color, prelude::RaylibDrawHandle};
 
 use crate::engine::{common::ui, listeners::base::render::render::scaled_value};
 
 pub fn render_game_over(d: &mut RaylibDrawHandle, scale_x: f32, scale_y: f32) {
-    ui::rectangle::rectangle(d, 
+    ui::rectangle::rectangle(
+        d,
         scaled_value(480, scale_x),
         scaled_value(335, scale_y),
         scaled_value(160, scale_x),
