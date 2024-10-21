@@ -28,7 +28,8 @@ enum Action {
     MoveLeft,
     MoveDown,
     Drop,
-    Rotate,
+    RotateClock,
+    RotateCounterClock,
     Hold,
     Pause,
 }
@@ -40,9 +41,10 @@ impl Debug for Action {
             Action::MoveLeft => write!(f, "MoveLeft"),
             Action::MoveDown => write!(f, "MoveDown"),
             Action::Drop => write!(f, "Drop"),
-            Action::Rotate => write!(f, "Rotate"),
             Action::Hold => write!(f, "Hold"),
             Action::Pause => write!(f, "Pause"),
+            Action::RotateClock => write!(f, "RotateClock"),
+            Action::RotateCounterClock => write!(f, "RotateCounterClock"),
         }
     }
 }
@@ -140,7 +142,8 @@ fn check_move() {
 
     for action in actions {
         match action {
-            Action::Rotate => rotate(),
+            Action::RotateClock => rotate_clock(),
+            Action::RotateCounterClock => rotate_counter_clock(),
             Action::MoveRight => move_right(),
             Action::MoveLeft => move_left(),
             Action::MoveDown => _ = move_down(true),
@@ -474,9 +477,14 @@ fn process_input_buffer() -> Vec<&'static Action> {
                         actions.push(&Action::Drop);
                     }
                 }
-                Action::Rotate => {
+                Action::RotateClock => {
                     if key_action == &KeyboardAction::Pressed {
-                        actions.push(&Action::Rotate);
+                        actions.push(&Action::RotateClock);
+                    }
+                }
+                Action::RotateCounterClock => {
+                    if key_action == &KeyboardAction::Pressed {
+                        actions.push(&Action::RotateCounterClock);
                     }
                 }
                 Action::Hold => {
@@ -502,14 +510,15 @@ fn get_action(key: &KeyboardKey) -> Option<Action> {
         KeyboardKey::KEY_LEFT => Some(Action::MoveLeft),
         KeyboardKey::KEY_DOWN => Some(Action::MoveDown),
         KeyboardKey::KEY_SPACE => Some(Action::Drop),
-        KeyboardKey::KEY_UP => Some(Action::Rotate),
+        KeyboardKey::KEY_UP => Some(Action::RotateClock),
+        KeyboardKey::KEY_Z => Some(Action::RotateCounterClock),
         KeyboardKey::KEY_LEFT_SHIFT => Some(Action::Hold),
         KeyboardKey::KEY_ESCAPE => Some(Action::Pause),
         _ => None,
     }
 }
 
-fn rotate() {
+fn rotate_clock() {
     // Remove the current piece from the arena
     let (center_x, center_y) = read_game_state().current_center;
     let controlling_id = read_game_state().controlling;
@@ -587,6 +596,88 @@ fn rotate() {
 
     // Update the current piece and center
     // game_state.current_piece.layout = matrix;
+    let mut current_piece = read_game_state().current_piece.clone();
+    current_piece.layout = matrix;
+    write_game_state_current_piece(current_piece);
+}
+
+fn rotate_counter_clock() {
+    // Remove the current piece from the arena
+    let (center_x, center_y) = read_game_state().current_center;
+    let controlling_id = read_game_state().controlling;
+    let mut matrix = read_game_state().current_piece.layout.clone();
+
+    let binding = read_game_state().clone();
+    let block = match binding.all_pieces.iter().find(|&p| p.0 == controlling_id) {
+        Some(piece) => &piece.1,
+        None => return,
+    };
+
+    if !block.can_rotate {
+        return;
+    }
+
+    let mut new_matrix = vec![vec![0; matrix.len()]; matrix[0].len()];
+    for i in 0..matrix.len() {
+        for j in 0..matrix[i].len() {
+            new_matrix[matrix.len() - 1 - j][i] = matrix[i][j];
+        }
+    }
+
+    matrix = new_matrix;
+
+    let mut arena = read_game_state().arena.clone();
+
+    for i in 0..matrix.len() {
+        for j in 0..matrix[i].len() {
+            if matrix[i][j] == 1 {
+                let x = j as i32 - 2;
+                let y = i as i32 - 2;
+
+                let pos_x = center_x as i32 + x;
+                let pos_y = center_y as i32 + y;
+
+                if pos_x < 0
+                    || pos_x >= arena[0].len() as i32
+                    || pos_y < 0
+                    || pos_y >= arena.len() as i32
+                    || (arena[pos_y as usize][pos_x as usize] != 0
+                        && arena[pos_y as usize][pos_x as usize] != controlling_id)
+                {
+                    return;
+                }
+            }
+        }
+    }
+
+    // go over each row in arena
+    for y in 0..arena.len() {
+        // go over each column in arena
+        for x in 0..arena[y].len() {
+            if arena[y][x] == controlling_id {
+                arena[y][x] = 0;
+            }
+        }
+    }
+
+    for i in 0..matrix.len() {
+        for j in 0..matrix[i].len() {
+            if matrix[i][j] == 1 {
+                // get the position of the block based on how far it is from (2, 2)
+                let x = j as i32 - 2;
+                let y = i as i32 - 2;
+
+                let pos_x = center_x as i32 + x;
+                let pos_y = center_y as i32 + y;
+
+                arena[pos_y as usize][pos_x as usize] = controlling_id;
+            }
+        }
+    }
+
+    write_game_state_arena(arena);
+
+    // Update the current piece and center
     let mut current_piece = read_game_state().current_piece.clone();
     current_piece.layout = matrix;
     write_game_state_current_piece(current_piece);
