@@ -16,13 +16,33 @@ pub enum KeyboardAction {
     Pressed,
     Released,
 }
-
+#[derive(Debug)]
 pub struct Block {
     pub layout: Vec<Vec<i32>>,
     pub can_rotate: bool,
     pub color: Color,
     pub name: String,
     pub active: bool,
+}
+
+impl Block {
+    pub fn new() -> Self {
+        Self {
+            layout: vec![],
+            can_rotate: false,
+            color: Color::WHITE,
+            name: "".to_string(),
+            active: false,
+        }
+    }
+    
+}
+
+impl Default for Block {
+    fn default() -> Self {
+        Self::new()
+    }
+    
 }
 
 #[derive(Serialize, Deserialize, Debug)]

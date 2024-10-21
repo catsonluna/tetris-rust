@@ -2,8 +2,9 @@ use super::game_manager::{Block, GameData};
 use arc_swap::ArcSwap;
 use lazy_static::lazy_static;
 use raylib::color::Color;
-use std::sync::Arc;
+use std::{fmt::Debug, sync::Arc};
 
+#[derive(Debug)]
 pub struct GameState {
     pub controlling: i32,
     pub arena: Vec<Vec<i32>>,
@@ -29,6 +30,12 @@ pub struct GameState {
     pub piece_queue: Vec<Block>,
 }
 
+impl Default for GameState {
+    fn default() -> Self {
+        Self::new()
+    }   
+}
+#[derive(Debug)]
 pub struct ActionManager {
     pub is_pressed: bool,
     pub move_ticks: i32,

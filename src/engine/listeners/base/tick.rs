@@ -810,3 +810,110 @@ fn move_down_ghost() -> bool {
         return false;
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::engine::managers::{game_manager::Block, game_state::{write_game_state, GameState}};
+
+    use super::*;
+
+    fn create_game_state() -> GameState {
+        let mut arena = vec![vec![0; 10]; 20];
+        let controlling = 1;
+        for y in 0..4 {
+            for x in 0..4 {
+                arena[y][x + 3] = controlling;
+            }
+        }
+
+        GameState {
+            arena,
+            controlling,
+            current_center: (5, 0),
+            current_piece: Block {
+                layout: vec![
+                    vec![0, 0, 0, 0, 0],
+                    vec![0, 0, 0, 0, 0],
+                    vec![0, 0, 0, 0, 0],
+                    vec![0, 0, 1, 0, 0],
+                ],
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+
+    }
+
+    #[test]
+    fn it_does_move_down() {
+        let game_state = create_game_state();
+        write_game_state(game_state);
+
+        let moved = move_down(true);
+        assert_eq!(moved, true);
+
+        write_game_state(GameState::default());
+    }
+
+    #[test]
+    fn it_does_not_move_down() {
+        let game_state = create_game_state();
+        write_game_state(game_state);
+        while move_down(true) {}
+
+
+        let moved = move_down(true);
+        assert_eq!(moved, false);
+
+        write_game_state(GameState::default());
+    }
+
+    #[test]
+    fn it_does_drop() {
+        let game_state = create_game_state();
+        write_game_state(game_state);
+
+        drop();
+
+        // assert that the piece has is at the bottom
+        let game_state = read_game_state();
+        let arena = game_state.arena.clone();
+        let controlling = game_state.controlling;
+        for y in 0..4 {
+            for x in 0..4 {
+                assert_eq!(arena[y + 16][x + 3], controlling);
+            }
+        }
+        write_game_state(GameState::default());
+    }
+
+    #[test]
+    fn it_does_move_right() {
+        let game_state = create_game_state();
+        write_game_state(game_state);
+
+        move_right();
+
+        // assert that the piece has moved right
+        let game_state = read_game_state();
+        let arena = game_state.arena.clone();
+        let controlling = game_state.controlling;
+        assert_eq!(arena[0][4], controlling);
+        write_game_state(GameState::default());
+    }
+
+    #[test]
+    fn it_does_move_left() {
+        let game_state = create_game_state();
+        write_game_state(game_state);
+
+        move_left();
+
+        // assert that the piece has moved left
+        let game_state = read_game_state();
+        let arena = game_state.arena.clone();
+        let controlling = game_state.controlling;
+        assert_eq!(arena[0][2], controlling);
+        write_game_state(GameState::default());
+    }
+}
