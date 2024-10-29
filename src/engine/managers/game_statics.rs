@@ -4,6 +4,7 @@ use std::sync::{RwLock, RwLockReadGuard};
 pub struct GameStatics {
     pub tick_rate: i32,
     pub block_size: i32,
+    pub url: String,
 }
 
 impl GameStatics {
@@ -11,6 +12,7 @@ impl GameStatics {
         Self {
             tick_rate: 60,
             block_size: 16,
+            url: "com.catsonluna.revris".to_string(),
         }
     }
 }

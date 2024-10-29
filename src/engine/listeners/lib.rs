@@ -1,6 +1,6 @@
 use event_listener_primitives::HandlerId;
 use once_cell::sync::Lazy;
-use std::sync::Mutex;
+use std::{fmt::format, sync::Mutex};
 
 use crate::engine::{
     common::storage,
@@ -16,7 +16,7 @@ use crate::engine::{
         game_state::{
             read_game_state, write_game_state, write_game_state_game_data,
             write_game_state_game_over, GameState,
-        },
+        }, game_statics::read_game_statics,
     },
 };
 
@@ -83,26 +83,29 @@ pub fn register(handler: HandlerId) {
 
 pub fn handle_button(test: String) {
     // create a switch statement to handle the different button events
-    match test.as_str() {
-        "com.catsonluna.revris.button.play" => {
+    match test.as_str().replace(&format!("{}.", &read_game_statics().url), "").as_str() {
+        "button.play" => {
             START_GAME_EVENT.call();
         }
-        "com.catsonluna.revris.button.quit" => {
+        "button.quit" => {
             END_GAME_EVENT.call();
             write_game_manager_should_quit(true);
         }
-        "com.catsonluna.revris.button.restart" => {
+        "button.restart" => {
             write_game_manager_running(false);
             START_GAME_EVENT.call();
         }
-        "com.catsonluna.revris.button.resume" => {
+        "button.resume" => {
             write_game_manager_running(true);
         }
-        "com.catsonluna.revris.button.main_menu" => {
+        "button.main_menu" => {
             END_GAME_EVENT.call();
             write_game_manager_running(false);
             write_game_manager_in_game(false);
             write_game_manager_screen("main".to_string());
+        }
+        "button.blocks" => {
+            write_game_manager_screen("create_shape".to_string());
         }
         _ => {
             println!("Unknown: {}", test);

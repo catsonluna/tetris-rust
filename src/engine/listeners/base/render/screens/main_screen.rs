@@ -3,7 +3,7 @@ use raylib::{color::Color, prelude::RaylibDraw};
 use crate::engine::{
     common::ui,
     lib::RAYLIB_STATE,
-    listeners::base::render::render::{get_scaling_factors, scaled_value},
+    listeners::base::render::render::{get_scaling_factors, scaled_value}, managers::game_statics::read_game_statics,
 };
 
 pub fn render_main_menu() {
@@ -34,7 +34,7 @@ pub fn render_main_menu() {
             Color::BLACK,
             Color::BLACK,
             false,
-            "com.catsonluna.revris.button.play".to_string(),
+            format!("{}.{}", read_game_statics().url, "button.play".to_string()),
         );
 
         ui::button::button(
@@ -83,7 +83,7 @@ pub fn render_main_menu() {
             Color::BLACK,
             Color::BLACK,
             false,
-            "com.catsonluna.revris.button.quit".to_string(),
+            format!("{}.{}", read_game_statics().url, "button.quit".to_string()),
         );
         d.clear_background(Color::from_hex("cfcefc".as_ref()).unwrap());
     }

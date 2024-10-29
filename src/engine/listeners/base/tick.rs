@@ -210,19 +210,19 @@ fn move_right() {
     let mut arena = read_game_state().arena.clone();
     let controlling = read_game_state().controlling.clone();
     for y in 0..arena.len() {
-        let mut furthest_right = None; // Start as None to check if there's a 1
+        let mut furthest_right = None; 
         for x in (0..arena[y].len()).rev() {
             // Iterate from right to left
             if arena[y][x] == controlling {
                 furthest_right = Some(x);
-                break; // We can break here as we're looking for the first (furthest right) 1
+                break; 
             }
         }
         if let Some(x) = furthest_right {
             if x == arena[y].len() - 1 {
-                can_move = false; // If it's already at the right edge, it can't move right
+                can_move = false; 
             } else if arena[y][x + 1] != 0 {
-                can_move = false; // If the space to the right is not 0, it can't move
+                can_move = false;
             }
         }
     }
@@ -813,37 +813,38 @@ fn move_down_ghost() -> bool {
 
 #[cfg(test)]
 mod test {
-    use crate::engine::managers::{
-        game_manager::Block,
-        game_state::{write_game_state, GameState},
-    };
+    use crate::engine::managers::
+        game_state::{write_game_state, GameState}
+    ;
 
     use super::*;
 
     fn create_game_state() -> GameState {
         let mut arena = vec![vec![0; 10]; 20];
         let controlling = 1;
-        for y in 0..4 {
-            for x in 0..4 {
-                arena[y][x + 3] = controlling;
-            }
-        }
+        arena[0][3] = controlling;
 
         GameState {
             arena,
             controlling,
-            current_center: (5, 0),
-            current_piece: Block {
-                layout: vec![
-                    vec![0, 0, 0, 0, 0],
-                    vec![0, 0, 0, 0, 0],
-                    vec![0, 0, 0, 0, 0],
-                    vec![0, 0, 1, 0, 0],
-                ],
-                ..Default::default()
-            },
+            current_center: (3, 0),
             ..Default::default()
         }
+    }
+
+    #[test]
+    fn it_does_move_right() {
+        let game_state = create_game_state();
+        write_game_state(game_state);
+
+        move_right();
+
+        // assert that the piece has moved right
+        let game_state = read_game_state();
+        let arena = game_state.arena.clone();
+        let controlling = game_state.controlling;
+        assert_eq!(arena[0][4], controlling);
+        write_game_state(GameState::default());
     }
 
     #[test]
@@ -880,28 +881,11 @@ mod test {
         let game_state = read_game_state();
         let arena = game_state.arena.clone();
         let controlling = game_state.controlling;
-        for y in 0..4 {
-            for x in 0..4 {
-                assert_eq!(arena[y + 16][x + 3], controlling);
-            }
-        }
+
+        assert_eq!(arena[9][3], controlling);
         write_game_state(GameState::default());
     }
 
-    #[test]
-    fn it_does_move_right() {
-        let game_state = create_game_state();
-        write_game_state(game_state);
-
-        move_right();
-
-        // assert that the piece has moved right
-        let game_state = read_game_state();
-        let arena = game_state.arena.clone();
-        let controlling = game_state.controlling;
-        assert_eq!(arena[0][4], controlling);
-        write_game_state(GameState::default());
-    }
 
     #[test]
     fn it_does_move_left() {

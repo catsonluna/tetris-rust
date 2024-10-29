@@ -1,6 +1,6 @@
 use raylib::{color::Color, prelude::RaylibDrawHandle};
 
-use crate::engine::{common::ui, listeners::base::render::render::scaled_value};
+use crate::engine::{common::ui, listeners::base::render::render::scaled_value, managers::game_statics::read_game_statics};
 
 pub fn render_pause_menu(d: &mut RaylibDrawHandle, scale_x: f32, scale_y: f32) {
     ui::rectangle::rectangle(
@@ -35,7 +35,7 @@ pub fn render_pause_menu(d: &mut RaylibDrawHandle, scale_x: f32, scale_y: f32) {
         Color::BLACK,
         Color::BLACK,
         false,
-        "com.catsonluna.revris.button.resume".to_string(),
+        format!("{}.{}", read_game_statics().url, "button.resume".to_string()),
     );
 
     ui::button::button(
@@ -51,7 +51,7 @@ pub fn render_pause_menu(d: &mut RaylibDrawHandle, scale_x: f32, scale_y: f32) {
         Color::BLACK,
         Color::BLACK,
         false,
-        "com.catsonluna.revris.button.main_menu".to_string(),
+        format!("{}.{}", read_game_statics().url, "button.main_menu".to_string()),
     );
 
     ui::button::button(
@@ -67,6 +67,6 @@ pub fn render_pause_menu(d: &mut RaylibDrawHandle, scale_x: f32, scale_y: f32) {
         Color::BLACK,
         Color::BLACK,
         false,
-        "com.catsonluna.revris.button.quit".to_string(),
+        format!("{}.{}", read_game_statics().url, "button.quit".to_string()),
     );
 }

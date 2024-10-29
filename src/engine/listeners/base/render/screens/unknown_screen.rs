@@ -1,9 +1,11 @@
+use std::fmt::format;
+
 use raylib::{color::Color, prelude::RaylibDraw};
 
 use crate::engine::{
     common::ui,
     lib::RAYLIB_STATE,
-    listeners::base::render::render::{get_scaling_factors, scaled_value},
+    listeners::base::render::render::{get_scaling_factors, scaled_value}, managers::game_statics::read_game_statics,
 };
 
 pub fn render_unknown_screen() {
@@ -34,7 +36,7 @@ pub fn render_unknown_screen() {
             Color::BLACK,
             Color::BLACK,
             false,
-            "com.catsonluna.revris.button.main_menu".to_string(),
+            format!("{}.{}", read_game_statics().url, "button.main_menu".to_string()),
         );
 
         d.clear_background(Color::from_hex("cfcefc".as_ref()).unwrap());

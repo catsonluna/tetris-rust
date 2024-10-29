@@ -2,6 +2,7 @@ use raylib::prelude::*;
 
 use crate::engine::managers::game_manager::read_game_manager;
 
+use super::screens::create_shape_screen::render_create_shape;
 use super::screens::game_screen::render_game;
 use super::screens::main_screen::render_main_menu;
 use super::screens::unknown_screen::render_unknown_screen;
@@ -17,6 +18,9 @@ pub fn on_render() {
         }
         "main" => {
             render_main_menu();
+        }
+        "create_shape" => {
+            render_create_shape();
         }
         _ => {
             render_unknown_screen();
