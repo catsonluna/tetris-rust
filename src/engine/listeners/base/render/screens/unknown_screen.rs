@@ -1,5 +1,3 @@
-use std::fmt::format;
-
 use raylib::{color::Color, prelude::RaylibDraw};
 
 use crate::engine::{

@@ -1,4 +1,5 @@
 pub mod button;
 pub mod rectangle;
 pub mod text;
-pub mod shape_creator;
+pub mod check_box;
+pub mod color_picker;

@@ -9,9 +9,7 @@ use crate::engine::{
     },
     managers::{
         game_manager::{
-            read_game_manager, write_game_manager_in_game, write_game_manager_running,
-            write_game_manager_save_data, write_game_manager_screen,
-            write_game_manager_should_quit,
+            self, read_game_manager, write_game_manager, write_game_manager_custom_block, write_game_manager_in_game, write_game_manager_running, write_game_manager_save_data, write_game_manager_screen, write_game_manager_should_quit, Block
         },
         game_state::{
             read_game_state, write_game_state, write_game_state_game_data,
@@ -105,7 +103,15 @@ pub fn handle_button(test: String) {
             write_game_manager_screen("main".to_string());
         }
         "button.blocks" => {
+            write_game_manager_custom_block(Block::default());
             write_game_manager_screen("create_shape".to_string());
+        }
+        "button.save_shape" => {
+            let mut game_manager = game_manager::read_game_manager_only();
+            game_manager.pieces.push(game_manager.custom_block.clone());
+            write_game_manager_custom_block(Block::default());
+            write_game_manager(game_manager);
+            BUTTON_EVENT.call(format!("{}.{}", read_game_statics().url, "button.main_menu".to_string()));
         }
         _ => {
             println!("Unknown: {}", test);

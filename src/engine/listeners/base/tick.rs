@@ -256,19 +256,18 @@ fn move_left() {
 
     // Go over each row and get the furthest left value that is 1, then check if it can move left
     for y in 0..arena.len() {
-        let mut furthest_left = None; // Start as None to check if there's a 1
+        let mut furthest_left = None;
         for x in 0..arena[y].len() {
-            // Iterate from left to right
             if arena[y][x] == controlling {
                 furthest_left = Some(x);
-                break; // We can break here as we're looking for the first (furthest left) 1
+                break;
             }
         }
         if let Some(x) = furthest_left {
             if x == 0 {
-                can_move = false; // If it's already at the left edge, it can't move left
+                can_move = false; 
             } else if arena[y][x - 1] != 0 {
-                can_move = false; // If the space to the left is not 0, it can't move
+                can_move = false; 
             }
         }
     }

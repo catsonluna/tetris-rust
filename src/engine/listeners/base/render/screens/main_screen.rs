@@ -49,8 +49,8 @@ pub fn render_main_menu() {
             scaled_value(20, scale_y),
             Color::BLACK,
             Color::BLACK,
-            true,
-            "".to_string(),
+            false,
+            format!("{}.{}", read_game_statics().url, "button.blocks".to_string()),
         );
 
         // disabled settings button

@@ -19,7 +19,6 @@ pub fn button(
     let button_x = x - width / 2;
     let button_y = y - height / 2;
 
-    // if disabled, make the button gray and have no click event
     if disabled {
         d.draw_rectangle(button_x, button_y, width, height, color);
         let text_width = d.measure_text(&text, font_size);

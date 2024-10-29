@@ -158,7 +158,7 @@ pub struct GameManager {
     pub screen: String,
     pub screen_path: Vec<String>,
 
-    pub custom_blocks: Block,
+    pub custom_block: Block,
 }
 
 impl GameManager {
@@ -308,7 +308,7 @@ impl GameManager {
             ],
             app_start_time: Instant::now(),
             save_data: SaveData::new(),
-            custom_blocks: Block::new(),
+            custom_block: Block::new(),
         }
     }
 }
@@ -332,7 +332,7 @@ impl Clone for GameManager {
             pieces: self.pieces.clone(),
             app_start_time: self.app_start_time,
             save_data: self.save_data.clone(),
-            custom_blocks: self.custom_blocks.clone(),
+            custom_block: self.custom_block.clone(),
         }
     }
 }
@@ -426,8 +426,8 @@ pub fn write_game_manager_screen_path(screen_path: Vec<String>) {
     GAME_MANAGER.store(Arc::new(game_manager));
 }
 
-pub fn write_game_manager_custom_blocks(custom_blocks: Block) {
+pub fn write_game_manager_custom_block(custom_blocks: Block) {
     let mut game_manager = read_game_manager_only();
-    game_manager.custom_blocks = custom_blocks;
+    game_manager.custom_block = custom_blocks;
     GAME_MANAGER.store(Arc::new(game_manager));
 }
