@@ -1,6 +1,6 @@
 use event_listener_primitives::HandlerId;
 use once_cell::sync::Lazy;
-use std::{fmt::format, sync::Mutex};
+use std::sync::Mutex;
 
 use crate::engine::{
     common::storage,

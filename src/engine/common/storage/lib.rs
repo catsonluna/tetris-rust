@@ -1,7 +1,9 @@
 use platform_dirs::AppDirs;
 
+use crate::engine::managers::game_statics::read_game_statics;
+
 fn get_app_data_dir() -> String {
-    let app_dirs = AppDirs::new(Some("com.catsonluna.revris"), true).unwrap();
+    let app_dirs = AppDirs::new(Some(&read_game_statics().url), true).unwrap();
     app_dirs.data_dir.to_str().unwrap().to_string()
 }
 
