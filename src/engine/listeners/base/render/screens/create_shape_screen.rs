@@ -72,7 +72,7 @@ pub fn render_create_shape() {
         );
 
         if ui::check_box::check_box(&mut d, 
-            scaled_value(30, scale_x),
+            scaled_value(30, scale_x), 
             scaled_value(30, scale_y),
             scaled_value(600, scale_x),    
             scaled_value(350, scale_y),
@@ -107,6 +107,22 @@ pub fn render_create_shape() {
         let mut block = game_manager.custom_block.clone();
         block.color = color;
         game_manager::write_game_manager_custom_block(block);
+
+        ui::button::button(
+            &mut d,
+            scaled_value(115, scale_x),
+            scaled_value(30, scale_y),
+            scaled_value(800, scale_x),
+            scaled_value(550, scale_y),
+            Color::WHITE,
+            Color::GRAY,
+            "Back".to_string(),
+            scaled_value(20, scale_y),
+            Color::BLACK,
+            Color::BLACK,
+            false,
+            format!("{}.{}", read_game_statics().url, "button.main_menu".to_string()),
+        );
 
 
         ui::button::button(
